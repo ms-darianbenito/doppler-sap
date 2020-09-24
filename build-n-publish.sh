@@ -4,12 +4,6 @@ commit=""
 name=""
 version=""
 versionPre=""
-platform="linux"
-
-if [ -n "${GIT_REF}" ]
-then
-  version="${GIT_REF#refs/tags/}"
-fi
 
 print_help () {
     echo ""
@@ -20,9 +14,8 @@ print_help () {
     echo "Options:"
     echo "  -c, --commit (mandatory)"
     echo "  -n, --name"
-    echo "  -v, --version (or set GIT_REF environment variable, ie: '/refs/tags/v0.0.14')"
+    echo "  -v, --version"
     echo "  -s, --pre-version-suffix (optional, only with version)"
-    echo "  -p, --platform (optional, default linux)"
     echo "  -h, --help"
     echo "Only one of name or version parameters is required, and cannot be included together."
     echo
@@ -47,9 +40,6 @@ case $i in
     ;;
     -s=*|--pre-version-suffix=*)
     versionPre="${i#*=}"
-    ;;
-    -p=*|--platform=*)
-    platform="${i#*=}"
     ;;
     -h|--help)
     print_help
@@ -177,49 +167,34 @@ then
   canonicalTag=${versionFull}
 fi
 
-platformSufix=""
-if [ "${platform}" != "linux" ]
-then
-  platformSufix="-${platform}"
-fi
-
 imageName=fromdoppler/doppler-sap
 
-if [ "${platform}" = "linux" ]
-then
-  docker build \
-      --file Dockerfile.verify \
-      .
-fi
-
-echo "${versionFull}-${platform}" > wwwroot_extras/version.txt
-
 docker build \
-    -t "${imageName}:${canonicalTag}${platformSufix}" \
+    -t "${imageName}:${canonicalTag}" \
+    --build-arg version="${versionFull}" \
     .
 
 # TODO: It could break concurrent deployments with different docker accounts
-# Using /dev/null because PowerShell (in AppVeyor) detects logged warnings as errors
-docker login -u="${DOCKER_WRITTER_USERNAME}" -p="${DOCKER_WRITTER_PASSWORD}" 2> /dev/null
+docker login -u="${DOCKER_WRITTER_USERNAME}" -p="${DOCKER_WRITTER_PASSWORD}"
 
 if [ -n "${version}" ]
 then
-    docker tag "${imageName}:${canonicalTag}${platformSufix}" "${imageName}:${versionMayor}${platformSufix}"
-    docker tag "${imageName}:${canonicalTag}${platformSufix}" "${imageName}:${versionMayorMinor}${platformSufix}"
-    docker tag "${imageName}:${canonicalTag}${platformSufix}" "${imageName}:${versionMayorMinorPatch}${platformSufix}"
-    docker tag "${imageName}:${canonicalTag}${platformSufix}" "${imageName}:${versionMayorMinorPatchPre}${platformSufix}"
+    docker tag "${imageName}:${canonicalTag}" "${imageName}:${versionMayor}"
+    docker tag "${imageName}:${canonicalTag}" "${imageName}:${versionMayorMinor}"
+    docker tag "${imageName}:${canonicalTag}" "${imageName}:${versionMayorMinorPatch}"
+    docker tag "${imageName}:${canonicalTag}" "${imageName}:${versionMayorMinorPatchPre}"
 
-    docker push "${imageName}:${canonicalTag}${platformSufix}"
-    docker push "${imageName}:${versionMayorMinorPatchPre}${platformSufix}"
-    docker push "${imageName}:${versionMayorMinorPatch}${platformSufix}"
-    docker push "${imageName}:${versionMayorMinor}${platformSufix}"
-    docker push "${imageName}:${versionMayor}${platformSufix}"
+    docker push "${imageName}:${canonicalTag}"
+    docker push "${imageName}:${versionMayorMinorPatchPre}"
+    docker push "${imageName}:${versionMayorMinorPatch}"
+    docker push "${imageName}:${versionMayorMinor}"
+    docker push "${imageName}:${versionMayor}"
 fi
 
 if [ -n "${name}" ]
 then
-    docker tag "${imageName}:${canonicalTag}${platformSufix}" "${imageName}:${name}${platformSufix}"
+    docker tag "${imageName}:${canonicalTag}" "${imageName}:${name}"
 
-    docker push "${imageName}:${canonicalTag}${platformSufix}"
-    docker push "${imageName}:${name}${platformSufix}"
+    docker push "${imageName}:${canonicalTag}"
+    docker push "${imageName}:${name}"
 fi

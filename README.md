@@ -1,7 +1,5 @@
 # Doppler SAP
 
-
-
 ## Continuous Deployment to test and production environments
 
 We are following the same criteria than

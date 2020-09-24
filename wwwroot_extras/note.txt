@@ -1,0 +1,7 @@
+This file is here to ensure existence and content of `wwwroot_extras` folder and
+allow running `docker build .` without errors.
+
+`build-n-publish.sh` generates a `version.txt` file with the right version
+number and stores it in this folder and is copied to the container during
+`docker build .`.
+

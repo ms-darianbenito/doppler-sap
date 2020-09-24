@@ -21,7 +21,7 @@ namespace Doppler.Sap.Test.Controllers
 
             // Assert
             Assert.Equal(HttpStatusCode.OK, (HttpStatusCode)((ObjectResult)response).StatusCode.Value);
-            Assert.Equal("Works fine!!", ((ObjectResult)response).Value);
+            Assert.Equal("Works fine!!!", ((ObjectResult)response).Value);
         }
     }
 }

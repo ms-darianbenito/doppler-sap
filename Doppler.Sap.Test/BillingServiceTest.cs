@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Doppler.Sap.Models;
 using Doppler.Sap.Services;
 using Doppler.Sap.Utils;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
@@ -15,7 +16,10 @@ namespace Doppler.Sap.Test
         public async Task BillingService_ShouldNotBeAddTaskInQueue_WhenCurrencyRateListIsEmpty()
         {
             var queuingServiceMock = new Mock<IQueuingService>();
-            var billingService = new BillingService(queuingServiceMock.Object, Mock.Of<IDateTimeProvider>());
+            var billingService = new BillingService(queuingServiceMock.Object,
+                Mock.Of<IDateTimeProvider>(),
+                Mock.Of<ILogger<BillingService>>(),
+                Mock.Of<ISlackService>());
 
             var currencyList = new List<CurrencyRateDto>();
 
@@ -28,7 +32,10 @@ namespace Doppler.Sap.Test
         public async Task BillingService_ShouldBeAddTaskInQueue_WhenCurrencyRateListHasOneValidElement()
         {
             var queuingServiceMock = new Mock<IQueuingService>();
-            var billingService = new BillingService(queuingServiceMock.Object, Mock.Of<IDateTimeProvider>());
+            var billingService = new BillingService(queuingServiceMock.Object,
+                Mock.Of<IDateTimeProvider>(),
+                Mock.Of<ILogger<BillingService>>(),
+                Mock.Of<ISlackService>());
 
             var currencyList = new List<CurrencyRateDto>
             {
@@ -54,7 +61,10 @@ namespace Doppler.Sap.Test
             dateTimeProviderMock.Setup(x => x.UtcNow)
                 .Returns(new DateTime(2020, 09, 25));
 
-            var billingService = new BillingService(queuingServiceMock.Object, dateTimeProviderMock.Object);
+            var billingService = new BillingService(queuingServiceMock.Object,
+                dateTimeProviderMock.Object,
+                Mock.Of<ILogger<BillingService>>(),
+                Mock.Of<ISlackService>());
 
             var currencyList = new List<CurrencyRateDto>
             {

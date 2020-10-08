@@ -18,6 +18,8 @@ namespace Doppler.Sap.Factory
             {
                 case SapTaskEnum.CurrencyRate:
                     return (SetCurrencyRateHandler)_serviceProvider.GetService(typeof(SetCurrencyRateHandler));
+                case SapTaskEnum.BillingRequest:
+                    return (BillingRequestHandler)_serviceProvider.GetService(typeof(BillingRequestHandler));
                 default:
                     throw new ArgumentOutOfRangeException();
             }

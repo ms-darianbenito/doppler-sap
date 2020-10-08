@@ -1,0 +1,466 @@
+[
+  {
+    "PlanType": 2,
+    "PlanDescription": [
+      {
+        "ItemCode": "1.3.1",
+        "emailsQty": 100000,
+        "description": "High Volume Plan up to 100.000 emails"
+      },
+      {
+        "ItemCode": "1.3.2",
+        "emailsQty": 200000,
+        "description": "High Volume Plan up to 200.000 emails"
+      },
+      {
+        "ItemCode": "1.3.3",
+        "emailsQty": 300000,
+        "description": "High Volume Plan up to 300.000 emails"
+      },
+      {
+        "ItemCode": "1.3.4",
+        "emailsQty": 400000,
+        "description": "High Volume Plan up to 400.000 emails"
+      },
+      {
+        "ItemCode": "1.3.5",
+        "emailsQty": 500000,
+        "description": "High Volume Plan up to 500.000 emails"
+      },
+      {
+        "ItemCode": "1.3.6",
+        "emailsQty": 700000,
+        "description": "High Volume Plan up to 700.000 emails"
+      },
+      {
+        "ItemCode": "1.3.7",
+        "emailsQty": 1000000,
+        "description": "High Volume Plan up to 1.000.000 emails"
+      },
+      {
+        "ItemCode": "1.3.8",
+        "emailsQty": 2000000,
+        "description": "High Volume Plan up to 2.000.000 emails"
+      },
+      {
+        "ItemCode": "1.3.9",
+        "emailsQty": 3000000,
+        "description": "High Volume Plan up to 3.000.000 emails"
+      },
+      {
+        "ItemCode": "1.3.10",
+        "emailsQty": 4000000,
+        "description": "High Volume Plan up to 4.000.000 emails"
+      },
+      {
+        "ItemCode": "1.3.11",
+        "emailsQty": 5000000,
+        "description": "High Volume Plan up to 5.000.000 emails"
+      },
+      {
+        "ItemCode": "1.3.12",
+        "emailsQty": 7000000,
+        "description": "High Volume Plan up to 7.000.000 emails"
+      },
+      {
+        "ItemCode": "1.3.13",
+        "emailsQty": 10000000,
+        "description": "High Volume Plan up to 10.000.000 emails"
+      },
+      {
+        "ItemCode": "1.3.14",
+        "SurplusEmails": true,
+        "description": "High Volume Plan surpluses"
+      },
+      {
+        "ItemCode": "1.3.15",
+        "CustomPlan": true,
+        "description": "Custom made Plan"
+      }
+    ]
+  },
+  {
+    "PlanType": 0,
+    "PlanDescription": [
+      {
+        "ItemCode": "1.4.1",
+        "emailsQty": 100000,
+        "description": "Client Manager Plan up to 100.000 emails"
+      },
+      {
+        "ItemCode": "1.4.2",
+        "emailsQty": 200000,
+        "description": "Client Manager Plan up to 200.000 emails"
+      },
+      {
+        "ItemCode": "1.4.3",
+        "emailsQty": 300000,
+        "description": "Client Manager Plan up to 300.000 emails"
+      },
+      {
+        "ItemCode": "1.4.4",
+        "emailsQty": 400000,
+        "description": "Client Manager Plan up to 400.000 emails"
+      },
+      {
+        "ItemCode": "1.4.5",
+        "emailsQty": 500000,
+        "description": "Client Manager Plan up to 500.000 emails"
+      },
+      {
+        "ItemCode": "1.4.6",
+        "emailsQty": 700000,
+        "description": "Client Manager Plan up to 700.000 emails"
+      },
+      {
+        "ItemCode": "1.4.7",
+        "emailsQty": 1000000,
+        "description": "Client Manager Plan up to 1.000.000 emails"
+      },
+      {
+        "ItemCode": "1.4.8",
+        "emailsQty": 2000000,
+        "description": "Client Manager Plan up to 2.000.000 emails"
+      },
+      {
+        "ItemCode": "1.4.9",
+        "emailsQty": 3000000,
+        "description": "Client Manager Plan up to 3.000.000 emails"
+      },
+      {
+        "ItemCode": "1.4.10",
+        "emailsQty": 4000000,
+        "description": "Client Manager Plan up to 4.000.000 emails"
+      },
+      {
+        "ItemCode": "1.4.11",
+        "emailsQty": 5000000,
+        "description": "Client Manager Plan up to 5.000.000 emails"
+      },
+      {
+        "ItemCode": "1.4.12",
+        "emailsQty": 7000000,
+        "description": "Client Manager Plan up to 7.000.000 emails"
+      },
+      {
+        "ItemCode": "1.4.13",
+        "emailsQty": 10000000,
+        "description": "Client Manager Plan up to 10.000.000 emails"
+      },
+      {
+        "ItemCode": "1.4.14",
+        "SurplusEmails": true,
+        "description": "Client Manager Plan surpluses"
+      },
+      {
+        "ItemCode": "1.4.15",
+        "CustomPlan": true,
+        "description": "Custom made Client Manager Plan"
+      }
+    ]
+  },
+  {
+    "PlanType": 4,
+    "PlanDescription": [
+      {
+        "ItemCode": "1.5.1",
+        "SubscriberQty": 1500,
+        "description": "Up to 1.500 contacts"
+      },
+      {
+        "ItemCode": "1.5.2",
+        "SubscriberQty": 2500,
+        "description": "Up to 2.500 contacts"
+      },
+      {
+        "ItemCode": "1.5.3",
+        "SubscriberQty": 5000,
+        "description": "Up to 5.000 contacts"
+      },
+      {
+        "ItemCode": "1.5.4",
+        "SubscriberQty": 10000,
+        "description": "Up to 10.000 contacts"
+      },
+      {
+        "ItemCode": "1.5.5",
+        "SubscriberQty": 15000,
+        "description": "Up to 15.000 contacts"
+      },
+      {
+        "ItemCode": "1.5.6",
+        "SubscriberQty": 25000,
+        "description": "Up to 25.000 contacts"
+      },
+      {
+        "ItemCode": "1.5.7",
+        "SubscriberQty": 50000,
+        "description": "Up to 50.000 contacts"
+      },
+      {
+        "ItemCode": "1.5.8",
+        "SubscriberQty": 75000,
+        "description": "Up to 75.000 contacts"
+      },
+      {
+        "ItemCode": "1.5.9",
+        "SubscriberQty": 100000,
+        "description": "Up to 100.000 contacts"
+      },
+      {
+        "ItemCode": "1.5.10",
+        "SubscriberQty": 200000,
+        "description": "Up to 200.000 contacts"
+      }
+    ]
+  },
+  {
+    "PlanType": 3,
+    "PlanDescription": [
+      {
+        "ItemCode": "1.6.1",
+        "emailsQty": 1500,
+        "description": "Up to 1.500 emails"
+      },
+      {
+        "ItemCode": "1.6.2",
+        "emailsQty": 2500,
+        "description": "Up to 2.500 emails"
+      },
+      {
+        "ItemCode": "1.6.3",
+        "emailsQty": 5000,
+        "description": "Up to 5.000 emails"
+      },
+      {
+        "ItemCode": "1.6.4",
+        "emailsQty": 10000,
+        "description": "Up to 10.000 emails"
+      },
+      {
+        "ItemCode": "1.6.5",
+        "emailsQty": 15000,
+        "description": "Up to 15.000 emails"
+      },
+      {
+        "ItemCode": "1.6.6",
+        "emailsQty": 25000,
+        "description": "Up to 25.000 emails"
+      },
+      {
+        "ItemCode": "1.6.7",
+        "emailsQty": 50000,
+        "description": "Up to 50.000 emails"
+      },
+      {
+        "ItemCode": "1.6.8",
+        "emailsQty": 100000,
+        "description": "Up to 100.000 emails"
+      },
+      {
+        "ItemCode": "1.6.9",
+        "emailsQty": 200000,
+        "description": "Up to 200.000 emails"
+      },
+      {
+        "ItemCode": "1.6.10",
+        "emailsQty": 300000,
+        "description": "Up to 300.000 emails"
+      },
+      {
+        "ItemCode": "1.6.11",
+        "emailsQty": 400000,
+        "description": "Up to 400.000 emails"
+      },
+      {
+        "ItemCode": "1.6.12",
+        "emailsQty": 500000,
+        "description": "Up to 500.000 emails"
+      },
+      {
+        "ItemCode": "1.6.13",
+        "emailsQty": 750000,
+        "description": "Up to 750.000 emails"
+      },
+      {
+        "ItemCode": "1.6.14",
+        "emailsQty": 1000000,
+        "description": "Up to 1.000.000 emails"
+      },
+      {
+        "ItemCode": "1.6.15",
+        "CustomPlan": true,
+        "description": "Custom made Prepaid Plan"
+      }
+    ]
+  },
+  {
+    "Plantype": 5,
+    "PlanDescription": [
+      {
+        "ItemCode": "1.2.1",
+        "emailsQty": 10000,
+        "description": "Basic Plan 10k"
+      },
+      {
+        "ItemCode": "1.2.2",
+        "emailsQty": 20000,
+        "description": "Basic Plan 20k"
+      },
+      {
+        "ItemCode": "1.2.3",
+        "emailsQty": 30000,
+        "description": "Basic Plan 30k"
+      },
+      {
+        "ItemCode": "1.2.4",
+        "emailsQty": 40000,
+        "description": "Basic Plan 40k"
+      },
+      {
+        "ItemCode": "1.2.5",
+        "emailsQty": 50000,
+        "description": "Basic Plan 50k"
+      },
+      {
+        "ItemCode": "1.2.6",
+        "emailsQty": 60000,
+        "description": "Basic Plan 60k"
+      },
+      {
+        "ItemCode": "1.2.7",
+        "emailsQty": 70000,
+        "description": "Basic Plan 70k"
+      },
+      {
+        "ItemCode": "1.2.8",
+        "emailsQty": 80000,
+        "description": "Basic Plan 80k"
+      },
+      {
+        "ItemCode": "1.2.9",
+        "emailsQty": 90000,
+        "description": "Basic Plan 90k"
+      },
+      {
+        "ItemCode": "1.2.10",
+        "emailsQty": 100000,
+        "description": "Basic Plan 100k"
+      },
+      {
+        "ItemCode": "1.2.11",
+        "emailsQty": 150000,
+        "description": "Basic Plan 150k"
+      },
+      {
+        "ItemCode": "1.2.12",
+        "emailsQty": 200000,
+        "description": "Basic Plan 200k"
+      },
+      {
+        "ItemCode": "1.2.13",
+        "emailsQty": 250000,
+        "description": "Pro Plan 250k"
+      },
+      {
+        "ItemCode": "1.2.14",
+        "emailsQty": 350000,
+        "description": "Pro Plan 350k"
+      },
+      {
+        "ItemCode": "1.2.15",
+        "emailsQty": 400000,
+        "description": "Pro Plan 400k"
+      },
+      {
+        "ItemCode": "1.2.16",
+        "emailsQty": 450000,
+        "description": "Pro Plan 450k"
+      },
+      {
+        "ItemCode": "1.2.17",
+        "emailsQty": 500000,
+        "description": "Pro Plan 500k"
+      },
+      {
+        "ItemCode": "1.2.18",
+        "emailsQty": 600000,
+        "description": "Pro Plan 600k"
+      },
+      {
+        "ItemCode": "1.2.19",
+        "emailsQty": 700000,
+        "description": "Pro Plan 700k"
+      },
+      {
+        "ItemCode": "1.2.20",
+        "emailsQty": 800000,
+        "description": "Pro Plan 800k"
+      },
+      {
+        "ItemCode": "1.2.21",
+        "emailsQty": 900000,
+        "description": "Pro Plan 900k"
+      },
+      {
+        "ItemCode": "1.2.22",
+        "emailsQty": 1000000,
+        "description": "Pro Plan 1M"
+      },
+      {
+        "ItemCode": "1.2.23",
+        "emailsQty": 1500000,
+        "description": "Pro Plan 1.5M"
+      },
+      {
+        "ItemCode": "1.2.24",
+        "emailsQty": 2000000,
+        "description": "Pro Plan 2M"
+      },
+      {
+        "ItemCode": "1.2.25",
+        "emailsQty": 2500000,
+        "description": "Pro Plan 2.5M"
+      },
+      {
+        "ItemCode": "1.2.26",
+        "emailsQty": 3000000,
+        "description": "Pro Plan 3M"
+      },
+      {
+        "ItemCode": "1.2.27",
+        "emailsQty": 3500000,
+        "description": "Pro Plan 3.5M"
+      },
+      {
+        "ItemCode": "1.2.28",
+        "emailsQty": 4000000,
+        "description": "Pro Plan 4M"
+      },
+      {
+        "ItemCode": "1.2.29",
+        "emailsQty": 5000000,
+        "description": "Pro Plan 5M"
+      },
+      {
+        "ItemCode": "1.2.30",
+        "CustomPlan": true,
+        "description": "Custom made Prepaid Plan"
+      },
+      {
+        "ItemCode": "1.2.31",
+        "emailsQty": 300000,
+        "description": "Pro Plan 300k"
+      },
+      {
+        "ItemCode": "1.2.32",
+        "SurplusEmails": true,
+        "description": "Surplus emails"
+      },
+      {
+        "ItemCode": "2.5.1",
+        "description": "IP dedicada"
+      }
+    ]
+  }
+]

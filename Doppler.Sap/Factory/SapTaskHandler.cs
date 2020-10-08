@@ -3,6 +3,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using Doppler.Sap.Mappers;
 using Doppler.Sap.Models;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -16,12 +17,12 @@ namespace Doppler.Sap.Factory
         protected SapLoginCookies SapCookies;
         private DateTime _sessionStartedAt;
         public HttpClient Client;
-        private readonly ILogger<SapTaskHandler> _logger;
+        protected readonly ILogger<SapTaskHandler> Logger;
 
         protected SapTaskHandler(IOptions<SapConfig> sapConfig, ILogger<SapTaskHandler> logger)
         {
             SapConfig = sapConfig.Value;
-            _logger = logger;
+            Logger = logger;
 
             var handler = new HttpClientHandler
             {
@@ -42,7 +43,7 @@ namespace Doppler.Sap.Factory
                 {
                     var sapResponse = await Client.SendAsync(new HttpRequestMessage
                     {
-                        RequestUri = new Uri($"{SapConfig.BaseServerURL}Login/"),
+                        RequestUri = new Uri($"{SapConfig.BaseServerUrl}Login/"),
                         Content = new StringContent(JsonConvert.SerializeObject(
                                 new SapConfig
                                 {
@@ -67,10 +68,33 @@ namespace Doppler.Sap.Factory
                 }
                 catch (Exception e)
                 {
-                    _logger.LogError(e, "Error starting session in Sap.");
+                    Logger.LogError(e, "Error starting session in Sap.");
                     throw;
                 }
             }
+        }
+
+        protected async Task<SapBusinessPartner> TryGetBusinessPartner(SapTask task)
+        {
+            var incompleteCardCode = BusinessPartnerMapper.MapDopplerUserIdToSapBusinessPartnerId(task.BillingRequest.UserId, task.BillingRequest.PlanType);
+
+            var message = new HttpRequestMessage
+            {
+                RequestUri = new Uri($"{SapConfig.BaseServerUrl}BusinessPartners?$filter=startswith(CardCode,'{incompleteCardCode}')"),
+                Method = HttpMethod.Get
+            };
+
+            message.Headers.Add("Cookie", SapCookies.B1Session);
+            message.Headers.Add("Cookie", SapCookies.RouteId);
+
+            var sapResponse = await Client.SendAsync(message);
+            // Should throw error because if the business partner doesn't exists it returns an empty json.
+            sapResponse.EnsureSuccessStatusCode();
+
+            var businessPartnersList = JsonConvert.DeserializeObject<SapBusinessPartnerList>(await sapResponse.Content.ReadAsStringAsync());
+            var businessPartner = businessPartnersList.value.FirstOrDefault(x => x.FederalTaxID == task.BillingRequest.FiscalID);
+
+            return businessPartner;
         }
     }
 }

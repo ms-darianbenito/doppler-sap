@@ -21,7 +21,7 @@ namespace Doppler.Sap.Test
             sapConfigMock.Setup(x => x.Value)
                 .Returns(new SapConfig
                 {
-                    BaseServerURL = "http://123.123.123",
+                    BaseServerUrl = "http://123.123.123",
                     CompanyDB = "CompanyDb",
                     Password = "password",
                     UserName = "Name"

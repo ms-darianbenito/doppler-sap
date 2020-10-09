@@ -4,7 +4,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Doppler.Sap.Factory;
 using Doppler.Sap.Models;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using Moq.Protected;
@@ -27,10 +26,32 @@ namespace Doppler.Sap.Test
                     UserName = "Name"
                 });
 
-            var handler = new SetCurrencyRateHandler(sapConfigMock.Object, Mock.Of<ILogger<SetCurrencyRateHandler>>());
-
+            var httpClientFactoryMock = new Mock<IHttpClientFactory>();
             var httpMessageHandlerMock = new Mock<HttpMessageHandler>();
+            httpMessageHandlerMock.Protected()
+                .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(new HttpResponseMessage
+                {
+                    StatusCode = HttpStatusCode.OK,
+                    Content = new StringContent(@"")
+                });
             var httpClient = new HttpClient(httpMessageHandlerMock.Object);
+
+            httpClientFactoryMock.Setup(_ => _.CreateClient(It.IsAny<string>()))
+                .Returns(httpClient);
+
+            var sapTaskHandlerMock = new Mock<ISapTaskHandler>();
+            sapTaskHandlerMock.Setup(x => x.StartSession())
+                .ReturnsAsync(new SapLoginCookies
+                {
+                    B1Session = "session",
+                    RouteId = "route"
+                });
+
+            var handler = new SetCurrencyRateHandler(
+                sapConfigMock.Object,
+                sapTaskHandlerMock.Object,
+                httpClientFactoryMock.Object);
 
             var httpResponseMessage = new HttpResponseMessage
             {
@@ -41,7 +62,6 @@ namespace Doppler.Sap.Test
             httpMessageHandlerMock.Protected()
                 .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
                 .ReturnsAsync(httpResponseMessage);
-            handler.Client = httpClient;
 
             var result = await handler.Handle(new SapTask
             {

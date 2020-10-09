@@ -9,26 +9,38 @@ using Newtonsoft.Json;
 
 namespace Doppler.Sap.Factory
 {
-    public class BillingRequestHandler : SapTaskHandler
+    public class BillingRequestHandler
     {
-        public BillingRequestHandler(IOptions<SapConfig> sapConfig, ILogger<SapTaskHandler> logger)
-            : base(sapConfig, logger) { }
+        private readonly ISapTaskHandler _sapTaskHandler;
+        private readonly ILogger<BillingRequestHandler> _logger;
+        private readonly SapConfig _sapConfig;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public override async Task<SapTaskResult> Handle(SapTask dequeuedTask)
+        public BillingRequestHandler(
+            IOptions<SapConfig> sapConfig,
+            ILogger<BillingRequestHandler> logger,
+            ISapTaskHandler sapTaskHandler,
+            IHttpClientFactory httpClientFactory)
         {
-            await StartSession();
+            _sapConfig = sapConfig.Value;
+            _logger = logger;
+            _sapTaskHandler = sapTaskHandler;
+            _httpClientFactory = httpClientFactory;
+        }
 
-            var businessPartner = await TryGetBusinessPartner(dequeuedTask);
+        public async Task<SapTaskResult> Handle(SapTask dequeuedTask)
+        {
+            var businessPartner = await _sapTaskHandler.TryGetBusinessPartner(dequeuedTask);
 
             if (businessPartner == null)
             {
-                Logger.LogError($"Failed at generating billing request for user: {dequeuedTask.BillingRequest.UserId}.");
+                _logger.LogError($"Failed at generating billing request for user: {dequeuedTask.BillingRequest.UserId}.");
                 return null;
             }
 
             if (string.IsNullOrEmpty(businessPartner.FederalTaxID))
             {
-                Logger.LogError(
+                _logger.LogError(
                     $"Can not create billing request for user id : {dequeuedTask.BillingRequest.UserId}, FiscalId: {dequeuedTask.BillingRequest.FiscalID} and user type: {dequeuedTask.BillingRequest.PlanType}");
                 return null;
             }
@@ -37,17 +49,19 @@ namespace Doppler.Sap.Factory
 
             var message = new HttpRequestMessage
             {
-                RequestUri = new Uri($"{SapConfig.BaseServerUrl}Orders"),
+                RequestUri = new Uri($"{_sapConfig.BaseServerUrl}Orders"),
                 Content = new StringContent(JsonConvert.SerializeObject(dequeuedTask.BillingRequest),
                     Encoding.UTF8,
                     "application/json"),
                 Method = HttpMethod.Post
             };
 
-            message.Headers.Add("Cookie", SapCookies.B1Session);
-            message.Headers.Add("Cookie", SapCookies.RouteId);
+            var cookies = await _sapTaskHandler.StartSession();
+            message.Headers.Add("Cookie", cookies.B1Session);
+            message.Headers.Add("Cookie", cookies.RouteId);
 
-            var sapResponse = await Client.SendAsync(message);
+            var client = _httpClientFactory.CreateClient();
+            var sapResponse = await client.SendAsync(message);
 
             var taskResult = new SapTaskResult
             {

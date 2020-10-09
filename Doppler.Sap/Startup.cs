@@ -70,7 +70,13 @@ namespace Doppler.Sap
             services.AddDopplerSecurity();
             services.AddCors();
 
-            services.AddHttpClient();
+            services.AddHttpClient("", c => { })
+                .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+                {
+                    ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator,
+                    UseCookies = false
+                });
+            services.AddTransient<ISapTaskHandler, SapTaskHandler>();
             services.AddTransient<IBillingService, BillingService>();
             services.AddSingleton<IQueuingService, QueuingService>();
             services.AddTransient<ISapService, SapService>();

@@ -5,32 +5,42 @@ using Doppler.Sap.Models;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System;
-using Microsoft.Extensions.Logging;
 
 namespace Doppler.Sap.Factory
 {
-    public class SetCurrencyRateHandler : SapTaskHandler
+    public class SetCurrencyRateHandler
     {
-        public SetCurrencyRateHandler(IOptions<SapConfig> sapConfig, ILogger<SetCurrencyRateHandler> logger)
-            : base(sapConfig, logger) { }
+        private readonly ISapTaskHandler _sapTaskHandler;
+        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly SapConfig _sapConfig;
 
-        public override async Task<SapTaskResult> Handle(SapTask dequeuedTask)
+        public SetCurrencyRateHandler(
+            IOptions<SapConfig> sapConfig,
+            ISapTaskHandler sapTaskHandler,
+            IHttpClientFactory httpClientFactory)
         {
-            await StartSession();
+            _sapConfig = sapConfig.Value;
+            _sapTaskHandler = sapTaskHandler;
+            _httpClientFactory = httpClientFactory;
+        }
 
+        public async Task<SapTaskResult> Handle(SapTask dequeuedTask)
+        {
             var message = new HttpRequestMessage
             {
-                RequestUri = new Uri($"{SapConfig.BaseServerUrl}SBOBobService_SetCurrencyRate"),
+                RequestUri = new Uri($"{_sapConfig.BaseServerUrl}SBOBobService_SetCurrencyRate"),
                 Content = new StringContent(JsonConvert.SerializeObject(dequeuedTask.CurrencyRate),
                     Encoding.UTF8,
                     "application/json"),
                 Method = HttpMethod.Post
             };
 
-            message.Headers.Add("Cookie", SapCookies.B1Session);
-            message.Headers.Add("Cookie", SapCookies.RouteId);
+            var cookies = await _sapTaskHandler.StartSession();
+            message.Headers.Add("Cookie", cookies.B1Session);
+            message.Headers.Add("Cookie", cookies.RouteId);
 
-            var sapResponse = await Client.SendAsync(message);
+            var client = _httpClientFactory.CreateClient();
+            var sapResponse = await client.SendAsync(message);
             var taskResult = new SapTaskResult
             {
                 IsSuccessful = sapResponse.IsSuccessStatusCode,

@@ -11,45 +11,36 @@ using Microsoft.Extensions.Options;
 
 namespace Doppler.Sap.Factory
 {
-    public abstract class SapTaskHandler
+    public class SapTaskHandler : ISapTaskHandler
     {
-        protected readonly SapConfig SapConfig;
-        protected SapLoginCookies SapCookies;
-        private DateTime _sessionStartedAt;
-        public HttpClient Client;
-        protected readonly ILogger<SapTaskHandler> Logger;
+        private readonly SapConfig _sapConfig;
+        private SapLoginCookies _sapCookies;
+        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly ILogger<SapTaskHandler> _logger;
 
-        protected SapTaskHandler(IOptions<SapConfig> sapConfig, ILogger<SapTaskHandler> logger)
+        public SapTaskHandler(IOptions<SapConfig> sapConfig, ILogger<SapTaskHandler> logger, IHttpClientFactory httpClientFactory)
         {
-            SapConfig = sapConfig.Value;
-            Logger = logger;
-
-            var handler = new HttpClientHandler
-            {
-                ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator,
-                UseCookies = false
-            };
-
-            Client = new HttpClient(handler);
+            _sapConfig = sapConfig.Value;
+            _logger = logger;
+            _httpClientFactory = httpClientFactory;
         }
 
-        public abstract Task<SapTaskResult> Handle(SapTask dequeuedTask);
-
-        protected async Task StartSession()
+        public async Task<SapLoginCookies> StartSession()
         {
-            if (SapCookies == null || DateTime.Now > _sessionStartedAt.AddMinutes(30))
+            if (_sapCookies == null)
             {
                 try
                 {
-                    var sapResponse = await Client.SendAsync(new HttpRequestMessage
+                    var client = _httpClientFactory.CreateClient();
+                    var sapResponse = await client.SendAsync(new HttpRequestMessage
                     {
-                        RequestUri = new Uri($"{SapConfig.BaseServerUrl}Login/"),
+                        RequestUri = new Uri($"{_sapConfig.BaseServerUrl}Login/"),
                         Content = new StringContent(JsonConvert.SerializeObject(
                                 new SapConfig
                                 {
-                                    CompanyDB = SapConfig.CompanyDB,
-                                    Password = SapConfig.Password,
-                                    UserName = SapConfig.UserName
+                                    CompanyDB = _sapConfig.CompanyDB,
+                                    Password = _sapConfig.Password,
+                                    UserName = _sapConfig.UserName
                                 }),
                             Encoding.UTF8,
                             "application/json"),
@@ -57,37 +48,41 @@ namespace Doppler.Sap.Factory
                     });
                     sapResponse.EnsureSuccessStatusCode();
 
-                    SapCookies = new SapLoginCookies
+                    _sapCookies = new SapLoginCookies
                     {
                         B1Session = sapResponse.Headers.GetValues("Set-Cookie").Where(x => x.Contains("B1SESSION"))
                             .Select(y => y.ToString().Substring(0, 46)).FirstOrDefault(),
                         RouteId = sapResponse.Headers.GetValues("Set-Cookie").Where(x => x.Contains("ROUTEID"))
                             .Select(y => y.ToString().Substring(0, 14)).FirstOrDefault()
                     };
-                    _sessionStartedAt = DateTime.Now;
+
                 }
                 catch (Exception e)
                 {
-                    Logger.LogError(e, "Error starting session in Sap.");
+                    _logger.LogError(e, "Error starting session in Sap.");
                     throw;
                 }
             }
+
+            return _sapCookies;
         }
 
-        protected async Task<SapBusinessPartner> TryGetBusinessPartner(SapTask task)
+        public async Task<SapBusinessPartner> TryGetBusinessPartner(SapTask task)
         {
             var incompleteCardCode = BusinessPartnerMapper.MapDopplerUserIdToSapBusinessPartnerId(task.BillingRequest.UserId, task.BillingRequest.PlanType);
 
             var message = new HttpRequestMessage
             {
-                RequestUri = new Uri($"{SapConfig.BaseServerUrl}BusinessPartners?$filter=startswith(CardCode,'{incompleteCardCode}')"),
+                RequestUri = new Uri($"{_sapConfig.BaseServerUrl}BusinessPartners?$filter=startswith(CardCode,'{incompleteCardCode}')"),
                 Method = HttpMethod.Get
             };
 
-            message.Headers.Add("Cookie", SapCookies.B1Session);
-            message.Headers.Add("Cookie", SapCookies.RouteId);
+            var cookies = await StartSession();
+            message.Headers.Add("Cookie", cookies.B1Session);
+            message.Headers.Add("Cookie", cookies.RouteId);
 
-            var sapResponse = await Client.SendAsync(message);
+            var client = _httpClientFactory.CreateClient();
+            var sapResponse = await client.SendAsync(message);
             // Should throw error because if the business partner doesn't exists it returns an empty json.
             sapResponse.EnsureSuccessStatusCode();
 

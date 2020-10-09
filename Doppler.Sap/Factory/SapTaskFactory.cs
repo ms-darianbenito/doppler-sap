@@ -1,5 +1,7 @@
 using System;
+using System.Threading.Tasks;
 using Doppler.Sap.Enums;
+using Doppler.Sap.Models;
 
 namespace Doppler.Sap.Factory
 {
@@ -12,17 +14,18 @@ namespace Doppler.Sap.Factory
             _serviceProvider = serviceProvider;
         }
 
-        public SapTaskHandler CreateHandler(SapTaskEnum sapTask)
+        public async Task<SapTaskResult> CreateHandler(SapTask sapTask)
         {
-            switch (sapTask)
+            switch (sapTask.TaskType)
             {
                 case SapTaskEnum.CurrencyRate:
-                    return (SetCurrencyRateHandler)_serviceProvider.GetService(typeof(SetCurrencyRateHandler));
+                    return await ((SetCurrencyRateHandler)_serviceProvider.GetService(typeof(SetCurrencyRateHandler))).Handle(sapTask);
                 case SapTaskEnum.BillingRequest:
-                    return (BillingRequestHandler)_serviceProvider.GetService(typeof(BillingRequestHandler));
+                    return await ((BillingRequestHandler)_serviceProvider.GetService(typeof(BillingRequestHandler))).Handle(sapTask);
                 default:
                     throw new ArgumentOutOfRangeException();
             }
         }
+
     }
 }

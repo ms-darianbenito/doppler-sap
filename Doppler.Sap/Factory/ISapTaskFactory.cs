@@ -1,9 +1,10 @@
-using Doppler.Sap.Enums;
+using System.Threading.Tasks;
+using Doppler.Sap.Models;
 
 namespace Doppler.Sap.Factory
 {
     public interface ISapTaskFactory
     {
-        SapTaskHandler CreateHandler(SapTaskEnum sapTaskType);
+        Task<SapTaskResult> CreateHandler(SapTask sapTaskType);
     }
 }

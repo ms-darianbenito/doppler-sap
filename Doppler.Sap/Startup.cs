@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Net.Http;
 using Doppler.Sap.DopplerSecurity;
 using Doppler.Sap.Factory;
 using Doppler.Sap.Models;
@@ -69,13 +70,22 @@ namespace Doppler.Sap
             services.AddDopplerSecurity();
             services.AddCors();
 
+            services.AddHttpClient("", c => { })
+                .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+                {
+                    ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator,
+                    UseCookies = false
+                });
+            services.AddTransient<ISapTaskHandler, SapTaskHandler>();
             services.AddTransient<IBillingService, BillingService>();
             services.AddSingleton<IQueuingService, QueuingService>();
             services.AddTransient<ISapService, SapService>();
             services.Configure<SapConfig>(Configuration.GetSection(nameof(SapConfig)));
             services.AddTransient<SetCurrencyRateHandler>();
+            services.AddTransient<BillingRequestHandler>();
             services.AddTransient<ISapTaskFactory, SapTaskFactory>();
             services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
+            services.AddTransient<ISlackService, SlackService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

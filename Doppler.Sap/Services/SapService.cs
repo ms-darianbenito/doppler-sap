@@ -15,9 +15,7 @@ namespace Doppler.Sap.Services
 
         public async Task<SapTaskResult> SendToSap(SapTask dequeuedTask)
         {
-            var sapTaskHandler = _sapTaskFactory.CreateHandler(dequeuedTask.TaskType);
-
-            return await sapTaskHandler.Handle(dequeuedTask);
+            return await _sapTaskFactory.CreateHandler(dequeuedTask);
         }
     }
 }

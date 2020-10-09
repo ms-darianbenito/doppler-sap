@@ -9,6 +9,7 @@ using Swashbuckle.AspNetCore.Annotations;
 
 namespace Doppler.Sap.Controllers
 {
+    [Route("[controller]")]
     [ApiController]
     [Authorize]
     public class BillingController
@@ -28,6 +29,16 @@ namespace Doppler.Sap.Controllers
             _logger.LogDebug("Setting currency date.");
 
             await _billingService.SendCurrencyToSap(currencyRate);
+
+            return new OkObjectResult("Successfully");
+        }
+
+        [HttpPost("CreateBillingRequest")]
+        public async Task<IActionResult> CreateBillingRequest([FromBody] List<BillingRequest> billingRequest)
+        {
+            _logger.LogDebug("Creating Billing request.");
+
+            await _billingService.CreateBillingRequest(billingRequest);
 
             return new OkObjectResult("Successfully");
         }

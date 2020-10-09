@@ -7,5 +7,6 @@ namespace Doppler.Sap.Services
     public interface IBillingService
     {
         Task SendCurrencyToSap(List<CurrencyRateDto> currencyRate);
+        Task CreateBillingRequest(List<BillingRequest> billingRequests);
     }
 }

@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Doppler.Sap.Mappers;
 using Doppler.Sap.Models;
+using Doppler.Sap.Utils;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Microsoft.Extensions.Options;
@@ -17,17 +18,23 @@ namespace Doppler.Sap.Factory
         private SapLoginCookies _sapCookies;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly ILogger<SapTaskHandler> _logger;
+        private readonly IDateTimeProvider _dateTimeProvider;
 
-        public SapTaskHandler(IOptions<SapConfig> sapConfig, ILogger<SapTaskHandler> logger, IHttpClientFactory httpClientFactory)
+        public SapTaskHandler(
+            IOptions<SapConfig> sapConfig,
+            ILogger<SapTaskHandler> logger,
+            IHttpClientFactory httpClientFactory,
+            IDateTimeProvider dateTimeProvider)
         {
             _sapConfig = sapConfig.Value;
             _logger = logger;
             _httpClientFactory = httpClientFactory;
+            _dateTimeProvider = dateTimeProvider;
         }
 
         public async Task<SapLoginCookies> StartSession()
         {
-            if (_sapCookies == null)
+            if (_sapCookies is null || _dateTimeProvider.UtcNow > _sapCookies.SessionEndAt)
             {
                 try
                 {
@@ -53,7 +60,8 @@ namespace Doppler.Sap.Factory
                         B1Session = sapResponse.Headers.GetValues("Set-Cookie").Where(x => x.Contains("B1SESSION"))
                             .Select(y => y.ToString().Substring(0, 46)).FirstOrDefault(),
                         RouteId = sapResponse.Headers.GetValues("Set-Cookie").Where(x => x.Contains("ROUTEID"))
-                            .Select(y => y.ToString().Substring(0, 14)).FirstOrDefault()
+                            .Select(y => y.ToString().Substring(0, 14)).FirstOrDefault(),
+                        SessionEndAt = _dateTimeProvider.UtcNow.AddMinutes(_sapConfig.SessionTimeout)
                     };
 
                 }

@@ -1,11 +1,12 @@
+using Doppler.Sap.Factory;
+using Doppler.Sap.Models;
+using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using System;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using Doppler.Sap.Factory;
-using Doppler.Sap.Models;
-using Newtonsoft.Json;
 
 namespace Doppler.Sap.Services
 {
@@ -17,9 +18,13 @@ namespace Doppler.Sap.Services
         private SapLoginCookies _sapCookies;
         private DateTime _sessionStartedAt;
 
-        public SapService(ISapTaskFactory sapTaskFactory)
+        public SapService(ISapTaskFactory sapTaskFactory,
+            IOptions<SapConfig> sapConfig,
+            IHttpClientFactory httpClientFactory)
         {
             _sapTaskFactory = sapTaskFactory;
+            _sapConfig = sapConfig.Value;
+            _client = httpClientFactory.CreateClient();
         }
 
         public async Task<SapTaskResult> SendToSap(SapTask dequeuedTask)
@@ -33,7 +38,7 @@ namespace Doppler.Sap.Services
 
             var message = new HttpRequestMessage()
             {
-                RequestUri = new Uri(String.Format("{0}BusinessPartners('{1}')", _sapConfig.BaseServerURL, cardCode)),
+                RequestUri = new Uri(String.Format("{0}BusinessPartners('{1}')", _sapConfig.BaseServerUrl, cardCode)),
                 Method = HttpMethod.Get
             };
             message.Headers.Add("Cookie", _sapCookies.B1Session);
@@ -54,7 +59,7 @@ namespace Doppler.Sap.Services
             {
                 var sapResponse = await _client.SendAsync(new HttpRequestMessage
                 {
-                    RequestUri = new Uri(String.Format("{0}Login/", _sapConfig.BaseServerURL)),
+                    RequestUri = new Uri(String.Format("{0}Login/", _sapConfig.BaseServerUrl)),
                     Content = new StringContent(JsonConvert.SerializeObject(new SapConfig
                     {
                         CompanyDB = _sapConfig.CompanyDB,
@@ -65,7 +70,6 @@ namespace Doppler.Sap.Services
                         , "application/json"),
                     Method = HttpMethod.Post,
                 });
-
                 if (sapResponse.IsSuccessStatusCode)
                 {
                     _sapCookies = new SapLoginCookies
@@ -93,7 +97,7 @@ namespace Doppler.Sap.Services
 
             var message = new HttpRequestMessage()
             {
-                RequestUri = new Uri(String.Format("{0}BusinessPartners?$filter=startswith(CardCode,'{1}')", _sapConfig.BaseServerURL, cardCode)),
+                RequestUri = new Uri(String.Format("{0}BusinessPartners?$filter=startswith(CardCode,'{1}')", _sapConfig.BaseServerUrl, cardCode)),
                 Method = HttpMethod.Get
             };
             message.Headers.Add("Cookie", _sapCookies.B1Session);

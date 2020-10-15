@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 
 namespace Doppler.Sap.Controllers
 {
+    [Route("[controller]")]
     [ApiController]
     [Authorize]
     public class BusinessPartnerController

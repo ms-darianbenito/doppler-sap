@@ -7,17 +7,13 @@ namespace Doppler.Sap.Services
 {
     public class BusinessPartnerService : IBusinessPartnerService
     {
-        private readonly BusinessPartnerMapper _businessPartnerMapper;
         private readonly IQueuingService _queuingService;
         private readonly ISapService _sapService;
 
-
         public BusinessPartnerService(
-            BusinessPartnerMapper businessPartnerMapper,
             IQueuingService queuingService,
             ISapService sapService)
         {
-            _businessPartnerMapper = businessPartnerMapper;
             _queuingService = queuingService;
             _sapService = sapService;
         }
@@ -25,7 +21,21 @@ namespace Doppler.Sap.Services
         public async Task CreateOrUpdateBusinessPartner(DopplerUserDTO dopplerUser)
         {
             var existentBusinessPartner = await GetBusinessPartnerIfExists(dopplerUser.Id, dopplerUser.FederalTaxID, dopplerUser.planType.Value);
-            var newBusinessPartner = await _businessPartnerMapper.MapDopplerUserToSAPBusinessPartner(dopplerUser, existentBusinessPartner.CardCode);
+
+            var fatherCard = dopplerUser.GroupCode == 115 ?
+                    $"CR{dopplerUser.Id:0000000000000}" :
+                    (dopplerUser.IsClientManager ?
+                    $"CD{int.Parse("400" + dopplerUser.Id.ToString()):0000000000000}" :
+                    $"CD{dopplerUser.Id:0000000000000}");
+
+            var fatherBusinessPartner = await _sapService.TryGetBusinessPartnerByCardCode(fatherCard);
+            if (fatherBusinessPartner == null && !existentBusinessPartner.CardCode.EndsWith(".0"))
+            {
+                fatherCard = existentBusinessPartner.CardCode.Replace(existentBusinessPartner.CardCode.Substring(existentBusinessPartner.CardCode.IndexOf(".")), ".0");
+                fatherBusinessPartner = await _sapService.TryGetBusinessPartnerByCardCode(fatherCard);
+            }
+
+            var newBusinessPartner = BusinessPartnerMapper.MapDopplerUserToSapBusinessPartner(dopplerUser, existentBusinessPartner.CardCode, fatherBusinessPartner);
 
             if (string.IsNullOrEmpty(existentBusinessPartner.FederalTaxID))
             {
@@ -52,7 +62,7 @@ namespace Doppler.Sap.Services
 
         private async Task<SapBusinessPartner> GetBusinessPartnerIfExists(int userId, string cuit, int userPlanTypeId)
         {
-            var cardcode = _businessPartnerMapper.MapDopplerUserIdToSapBusinessPartnerId(userId, userPlanTypeId);
+            var cardcode = BusinessPartnerMapper.MapDopplerUserIdToSapBusinessPartnerId(userId, userPlanTypeId);
 
             return await _sapService.TryGetBusinessPartner(cardcode, cuit);
         }

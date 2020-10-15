@@ -10,26 +10,8 @@ namespace Doppler.Sap.Mappers
 {
     public class BusinessPartnerMapper
     {
-        private readonly ISapService _sapService;
-        public BusinessPartnerMapper(ISapService sapService)
+        public static SapBusinessPartner MapDopplerUserToSapBusinessPartner(DopplerUserDTO dopplerUser, string cardCode, SapBusinessPartner fatherBusinessPartner)
         {
-            _sapService = sapService;
-        }
-        public async Task<SapBusinessPartner> MapDopplerUserToSAPBusinessPartner(DopplerUserDTO dopplerUser, string cardCode)
-        {
-            var fatherCard = dopplerUser.GroupCode == 115 ?
-                    String.Format("CR{0}", dopplerUser.Id.ToString("0000000000000")) :
-                    (dopplerUser.IsClientManager ?
-                    String.Format("CD{0}", (int.Parse("400" + dopplerUser.Id.ToString())).ToString("0000000000000")) :
-                    String.Format("CD{0}", dopplerUser.Id.ToString("0000000000000")));
-
-            var fatherBusinessPartner = await _sapService.TryGetBusinessPartnerByCardCode(fatherCard);
-            if (fatherBusinessPartner == null && !cardCode.EndsWith(".0"))
-            {
-                fatherCard = cardCode.Replace(cardCode.Substring(cardCode.IndexOf(".")), ".0");
-                fatherBusinessPartner = await _sapService.TryGetBusinessPartnerByCardCode(fatherCard);
-            }
-
             var newBusinessPartner = new SapBusinessPartner
             {
                 CardCode = cardCode,
@@ -141,7 +123,7 @@ namespace Doppler.Sap.Mappers
             return newBusinessPartner;
         }
 
-        public string MapDopplerUserIdToSapBusinessPartnerId(int userId, int? planType)
+        public static string MapDopplerUserIdToSapBusinessPartnerId(int userId, int planType)
         {
             var planTypeCode = Dictionaries.userPlanTypesDictionary.TryGetValue(planType, out string code)
                 ? code

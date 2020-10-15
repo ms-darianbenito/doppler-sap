@@ -24,9 +24,9 @@ namespace Doppler.Sap.Test
             var httpResponseMessage = new HttpResponseMessage
             {
                 StatusCode = HttpStatusCode.OK,
-                Content = new StringContent(@"")
+                Content = new StringContent(@"{'SessionTimeout': 30}")
             };
-            httpResponseMessage.Headers.Add("Set-Cookie", new []{ "B1SESSION=3e560b10-0e46-11e3-8004-1c96ec300ae4;HttpOnly;", "ROUTEID=.test1; path=/b1s" });
+            httpResponseMessage.Headers.Add("Set-Cookie", new[] { "B1SESSION=3e560b10-0e46-11e3-8004-1c96ec300ae4;HttpOnly;", "ROUTEID=.test1;path=/b1s" });
             httpMessageHandlerMock.Protected()
                 .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
                 .ReturnsAsync(httpResponseMessage);
@@ -45,8 +45,7 @@ namespace Doppler.Sap.Test
                     BaseServerUrl = "http://123.123.123",
                     CompanyDB = "CompanyDb",
                     Password = "password",
-                    UserName = "Name",
-                    SessionTimeout = 30
+                    UserName = "Name"
                 });
 
             var sapTaskHandler = new SapTaskHandler(
@@ -70,9 +69,9 @@ namespace Doppler.Sap.Test
             var httpResponseMessage = new HttpResponseMessage
             {
                 StatusCode = HttpStatusCode.OK,
-                Content = new StringContent(@"")
+                Content = new StringContent(@"{'SessionTimeout': 30}")
             };
-            httpResponseMessage.Headers.Add("Set-Cookie", new[] { "B1SESSION=3e560b10-0e46-11eb-8000-1c98ec3e0ag4;HttpOnly;", "ROUTEID=.test1; path=/b1as" });
+            httpResponseMessage.Headers.Add("Set-Cookie", new[] { "B1SESSION=3e560b10-0e46-11eb-8000-1c98ec3e0ag4;HttpOnly;", "ROUTEID=.test1;path=/b1as" });
             httpMessageHandlerMock.Protected()
                 .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
                 .ReturnsAsync(httpResponseMessage);
@@ -92,8 +91,7 @@ namespace Doppler.Sap.Test
                     BaseServerUrl = "http://123.123.123",
                     CompanyDB = "CompanyDb",
                     Password = "password",
-                    UserName = "Name",
-                    SessionTimeout = 30
+                    UserName = "Name"
                 });
 
             var sapTaskHandler = new SapTaskHandler(

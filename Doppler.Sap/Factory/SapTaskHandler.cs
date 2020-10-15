@@ -9,6 +9,7 @@ using Doppler.Sap.Utils;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json.Linq;
 
 namespace Doppler.Sap.Factory
 {
@@ -55,13 +56,14 @@ namespace Doppler.Sap.Factory
                     });
                     sapResponse.EnsureSuccessStatusCode();
 
+                    var sessionTimeout = JObject.Parse(await sapResponse.Content.ReadAsStringAsync());
                     _sapCookies = new SapLoginCookies
                     {
                         B1Session = sapResponse.Headers.GetValues("Set-Cookie").Where(x => x.Contains("B1SESSION"))
                             .Select(y => y.ToString().Substring(0, 46)).FirstOrDefault(),
                         RouteId = sapResponse.Headers.GetValues("Set-Cookie").Where(x => x.Contains("ROUTEID"))
                             .Select(y => y.ToString().Substring(0, 14)).FirstOrDefault(),
-                        SessionEndAt = _dateTimeProvider.UtcNow.AddMinutes(_sapConfig.SessionTimeout)
+                        SessionEndAt = _dateTimeProvider.UtcNow.AddMinutes((double)sessionTimeout["SessionTimeout"] - _sapConfig.SessionTimeoutPadding)
                     };
 
                 }

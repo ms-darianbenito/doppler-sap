@@ -84,6 +84,8 @@ namespace Doppler.Sap
             services.Configure<SapConfig>(Configuration.GetSection(nameof(SapConfig)));
             services.AddTransient<SetCurrencyRateHandler>();
             services.AddTransient<BillingRequestHandler>();
+            services.AddTransient<CreateBusinessPartnerHandler>();
+            services.AddTransient<UpdateBusinessPartnerHandler>();
             services.AddTransient<ISapTaskFactory, SapTaskFactory>();
             services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
             services.AddTransient<ISlackService, SlackService>();

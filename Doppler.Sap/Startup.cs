@@ -73,8 +73,7 @@ namespace Doppler.Sap
             services.AddHttpClient("", c => { })
                 .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
                 {
-                    ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator,
-                    UseCookies = false
+                    ServerCertificateCustomValidationCallback = (message, cert, chain, sslPolicyErrors) => true
                 });
             services.AddTransient<ISapTaskHandler, SapTaskHandler>();
             services.AddTransient<IBillingService, BillingService>();

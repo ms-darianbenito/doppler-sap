@@ -1,5 +1,4 @@
 using Doppler.Sap.Models;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System;
@@ -13,18 +12,15 @@ namespace Doppler.Sap.Factory
 {
     public class UpdateBusinessPartnerHandler
     {
-        private readonly ILogger<UpdateBusinessPartnerHandler> _logger;
         private readonly SapConfig _sapConfig;
         private readonly ISapTaskHandler _sapTaskHandler;
         private readonly IHttpClientFactory _httpClientFactory;
 
         public UpdateBusinessPartnerHandler(
-            ILogger<UpdateBusinessPartnerHandler> logger,
             IOptions<SapConfig> sapConfig,
             ISapTaskHandler sapTaskHandler,
             IHttpClientFactory httpClientFactory)
         {
-            _logger = logger;
             _sapConfig = sapConfig.Value;
             _sapTaskHandler = sapTaskHandler;
             _httpClientFactory = httpClientFactory;
@@ -32,18 +28,6 @@ namespace Doppler.Sap.Factory
 
         public async Task<SapTaskResult> Handle(SapTask dequeuedTask)
         {
-            if (dequeuedTask.BusinessPartner is null)
-            {
-                _logger.LogError($"Failed at updating a Bussines Partner.");
-                return null;
-            }
-
-            if (dequeuedTask.ExistentBusinessPartner is null)
-            {
-                _logger.LogError($"Failed at updating an non-existent Bussines Partner.");
-                return null;
-            }
-
             //SAP uses a non conventional patch where you have to send only the fields that you want to be changed with the new values
             dequeuedTask.BusinessPartner.BPAddresses = GetBPAddressesPatchObject(dequeuedTask.BusinessPartner.BPAddresses);
             dequeuedTask.BusinessPartner.ContactEmployees = GetContactEmployeesPatchObject(dequeuedTask.BusinessPartner.ContactEmployees, dequeuedTask.ExistentBusinessPartner.ContactEmployees);
@@ -51,24 +35,7 @@ namespace Doppler.Sap.Factory
             dequeuedTask.BusinessPartner.FederalTaxID = null;
             dequeuedTask.BusinessPartner.Currency = null;
 
-            var message = new HttpRequestMessage()
-            {
-                RequestUri = new Uri($"{_sapConfig.BaseServerUrl}BusinessPartners('{dequeuedTask.ExistentBusinessPartner.CardCode}'"),
-                Content = new StringContent(JsonConvert.SerializeObject(dequeuedTask.BusinessPartner, new JsonSerializerSettings
-                        {
-                            NullValueHandling = NullValueHandling.Ignore
-                        })
-                        , Encoding.UTF8
-                        , "application/json"),
-                Method = HttpMethod.Patch
-            };
-
-            var cookies = await _sapTaskHandler.StartSession();
-            message.Headers.Add("Cookie", cookies.B1Session);
-            message.Headers.Add("Cookie", cookies.RouteId);
-
-            var client = _httpClientFactory.CreateClient();
-            var sapResponse = await client.SendAsync(message);
+            var sapResponse = await SendMessage(dequeuedTask);
 
             var taskResult = new SapTaskResult
             {
@@ -82,10 +49,46 @@ namespace Doppler.Sap.Factory
                 dequeuedTask.BusinessPartner.FatherCard = !dequeuedTask.BusinessPartner.CardCode.EndsWith(".0")
                     ? dequeuedTask.BusinessPartner.CardCode.Replace(dequeuedTask.BusinessPartner.CardCode.Substring(dequeuedTask.BusinessPartner.CardCode.IndexOf(".")), ".0")
                     : null;
-                return await this.Handle(dequeuedTask);//VER!!
+                return await RetryUpdateBusinessPartner(dequeuedTask);
             }
 
             return taskResult;
+        }
+
+        private async Task<SapTaskResult> RetryUpdateBusinessPartner(SapTask dequeuedTask)
+        {
+            var sapResponse = await SendMessage(dequeuedTask);
+
+            var taskResult = new SapTaskResult
+            {
+                IsSuccessful = sapResponse.IsSuccessStatusCode,
+                SapResponseContent = await sapResponse.Content.ReadAsStringAsync(),
+                TaskName = "Updating Business Partner"
+            };
+
+            return taskResult;
+        }
+
+        private async Task<HttpResponseMessage> SendMessage(SapTask dequeuedTask)
+        {
+            var message = new HttpRequestMessage()
+            {
+                RequestUri = new Uri($"{_sapConfig.BaseServerUrl}BusinessPartners('{dequeuedTask.ExistentBusinessPartner.CardCode}')"),
+                Content = new StringContent(JsonConvert.SerializeObject(dequeuedTask.BusinessPartner, new JsonSerializerSettings
+                {
+                    NullValueHandling = NullValueHandling.Ignore
+                })
+                        , Encoding.UTF8
+                        , "application/json"),
+                Method = HttpMethod.Patch
+            };
+
+            var cookies = await _sapTaskHandler.StartSession();
+            message.Headers.Add("Cookie", cookies.B1Session);
+            message.Headers.Add("Cookie", cookies.RouteId);
+
+            var client = _httpClientFactory.CreateClient();
+            return await client.SendAsync(message);
         }
 
         private List<Address> GetBPAddressesPatchObject(List<Address> bPAddresses)
@@ -122,7 +125,6 @@ namespace Doppler.Sap.Factory
                         InternalCode = x.InternalCode
                     }))
                 .ToList();
-
 
             return updatesOnContactEmployee;
         }

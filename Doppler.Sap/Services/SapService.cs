@@ -38,7 +38,7 @@ namespace Doppler.Sap.Services
 
             var message = new HttpRequestMessage()
             {
-                RequestUri = new Uri(String.Format("{0}BusinessPartners('{1}')", _sapConfig.BaseServerUrl, cardCode)),
+                RequestUri = new Uri($"{_sapConfig.BaseServerUrl}BusinessPartners('{cardCode}')"),
                 Method = HttpMethod.Get
             };
             message.Headers.Add("Cookie", _sapCookies.B1Session);
@@ -59,7 +59,7 @@ namespace Doppler.Sap.Services
             {
                 var sapResponse = await _client.SendAsync(new HttpRequestMessage
                 {
-                    RequestUri = new Uri(String.Format("{0}Login/", _sapConfig.BaseServerUrl)),
+                    RequestUri = new Uri($"{_sapConfig.BaseServerUrl}Login/"),
                     Content = new StringContent(JsonConvert.SerializeObject(new SapConfig
                     {
                         CompanyDB = _sapConfig.CompanyDB,
@@ -97,7 +97,7 @@ namespace Doppler.Sap.Services
 
             var message = new HttpRequestMessage()
             {
-                RequestUri = new Uri(String.Format("{0}BusinessPartners?$filter=startswith(CardCode,'{1}')", _sapConfig.BaseServerUrl, cardCode)),
+                RequestUri = new Uri($"{_sapConfig.BaseServerUrl}BusinessPartners?$filter=startswith(CardCode,'{cardCode}')"),
                 Method = HttpMethod.Get
             };
             message.Headers.Add("Cookie", _sapCookies.B1Session);
@@ -121,7 +121,7 @@ namespace Doppler.Sap.Services
                 }
                 businessPartner = new SapBusinessPartner()
                 {
-                    CardCode = String.Format("{0}{1}", cardCode, amountBusinessPartnersForSameUser)
+                    CardCode = $"{cardCode}{amountBusinessPartnersForSameUser}"
                 };
             }
             return businessPartner;

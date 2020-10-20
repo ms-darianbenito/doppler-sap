@@ -15,7 +15,7 @@ namespace Doppler.Sap.Mappers
             var newBusinessPartner = new SapBusinessPartner
             {
                 CardCode = cardCode,
-                CardName = String.Format("{0} {1}", dopplerUser.FirstName, dopplerUser.LastName).ToUpper(),
+                CardName = $"{dopplerUser.FirstName} {dopplerUser.LastName}".ToUpper(),
                 GroupCode = dopplerUser.GroupCode,
                 PayTermsGrpCode = 5,
                 ContactPerson = new MailAddress((dopplerUser.BillingEmails != null && dopplerUser.BillingEmails[0] != String.Empty) ?
@@ -74,31 +74,31 @@ namespace Doppler.Sap.Mappers
                 {
                     new Address
                         {
-                             AddressName = "Bill to",
-                             Street = dopplerUser.BillingAddress != null ? dopplerUser.BillingAddress.ToUpper() : "",
-                             ZipCode = dopplerUser.BillingZip != null ? dopplerUser.BillingZip.ToUpper() : "",
-                             City = dopplerUser.BillingCity != null ? dopplerUser.BillingCity.ToUpper() : "",
-                             Country = dopplerUser.BillingCountryCode != null ? dopplerUser.BillingCountryCode.ToUpper() : "",
-                             State = dopplerUser.GroupCode == 115 ? dopplerUser.BillingStateId.ToString() :
+                            AddressName = "Bill to",
+                            Street = dopplerUser.BillingAddress != null ? dopplerUser.BillingAddress.ToUpper() : "",
+                            ZipCode = dopplerUser.BillingZip != null ? dopplerUser.BillingZip.ToUpper() : "",
+                            City = dopplerUser.BillingCity != null ? dopplerUser.BillingCity.ToUpper() : "",
+                            Country = dopplerUser.BillingCountryCode != null ? dopplerUser.BillingCountryCode.ToUpper() : "",
+                            State = dopplerUser.GroupCode == 115 ? dopplerUser.BillingStateId.ToString() :
                                 (dopplerUser.BillingCountryCode == "AR" ? (dopplerUser.BillingStateId.HasValue ?
                                 (Dictionaries.StatesDictionary.TryGetValue((int)dopplerUser.BillingStateId, out int sapBillStateId) ? sapBillStateId : 99) : 99).ToString("00") : null),
-                             AddressType = "bo_BillTo",
-                                 BPCode =  cardCode,
-                             RowNum = 0
+                            AddressType = "bo_BillTo",
+                                BPCode =  cardCode,
+                            RowNum = 0
                         },
                     new Address
                         {
-                             AddressName = "Ship to",
-                             Street = dopplerUser.BillingAddress != null ? dopplerUser.BillingAddress.ToUpper() : "",
-                             ZipCode = dopplerUser.BillingZip != null ? dopplerUser.BillingZip.ToUpper() : "",
-                             City = dopplerUser.BillingCity != null ? dopplerUser.BillingCity.ToUpper() : "",
-                             Country = dopplerUser.BillingCountryCode != null ? dopplerUser.BillingCountryCode.ToUpper() : "",
-                             State = dopplerUser.GroupCode == 115 ? dopplerUser.BillingStateId.ToString() :
+                            AddressName = "Ship to",
+                            Street = dopplerUser.BillingAddress != null ? dopplerUser.BillingAddress.ToUpper() : "",
+                            ZipCode = dopplerUser.BillingZip != null ? dopplerUser.BillingZip.ToUpper() : "",
+                            City = dopplerUser.BillingCity != null ? dopplerUser.BillingCity.ToUpper() : "",
+                            Country = dopplerUser.BillingCountryCode != null ? dopplerUser.BillingCountryCode.ToUpper() : "",
+                            State = dopplerUser.GroupCode == 115 ? dopplerUser.BillingStateId.ToString() :
                                 (dopplerUser.BillingCountryCode == "AR" ? (dopplerUser.BillingStateId.HasValue ?
                                 (Dictionaries.StatesDictionary.TryGetValue((int)dopplerUser.BillingStateId, out int sapShipStateId) ? sapShipStateId : 99) : 99).ToString("00") : null),
-                             AddressType = "bo_ShipTo",
-                                 BPCode =  cardCode,
-                             RowNum = 1
+                            AddressType = "bo_ShipTo",
+                                BPCode =  cardCode,
+                            RowNum = 1
                         }
                 }
             };
@@ -129,7 +129,7 @@ namespace Doppler.Sap.Mappers
                 ? code
                 : throw new ArgumentException("Parameter doesn't match with any plan type.", "userPlanTypeId");
 
-            return String.Format("{0}{1}.", planTypeCode, userId.ToString("00000000000"));
+            return $"{planTypeCode}{userId.ToString("00000000000")}.";
         }
     }
 }

@@ -21,13 +21,13 @@ namespace Doppler.Sap.Controllers
             (_logger, _businessPartnerService) = (logger, billingService);
 
         [HttpPost("CreateOrUpdateBusinessPartner")]
-        public async Task<IActionResult> CreateOrUpdateBusinessPartner([FromBody] DopplerUserDTO dopplerUser)
+        public async Task<IActionResult> CreateOrUpdateBusinessPartner([FromBody] DopplerUserDto dopplerUser)
         {
             _logger.LogInformation($"Received user: {dopplerUser.Email}");
-            var isValidUser = VerifyUserInformation(dopplerUser);
-            if (!string.IsNullOrEmpty(isValidUser))
+            var userVerificationError = VerifyUserInformation(dopplerUser);
+            if (!string.IsNullOrEmpty(userVerificationError))
             {
-                return new BadRequestObjectResult(isValidUser);
+                return new BadRequestObjectResult(userVerificationError);
             }
 
             try
@@ -48,7 +48,7 @@ namespace Doppler.Sap.Controllers
             }
         }
 
-        private string VerifyUserInformation(DopplerUserDTO dopplerUser)
+        private string VerifyUserInformation(DopplerUserDto dopplerUser)
         {
             if (dopplerUser.BillingCountryCode != "AR")
             {

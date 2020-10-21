@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace Doppler.Sap.Models
 {
-    public class DopplerUserDTO
+    public class DopplerUserDto
     {
         public int Id { get; set; }
         public string FirstName { get; set; }
@@ -31,7 +31,7 @@ namespace Doppler.Sap.Models
         public string BillingCity { get; set; }
         public string BillingCountryCode { get; set; }
         public int? BillingStateId { get; set; }
-        public int? planType { get; set; }
+        public int? PlanType { get; set; }
         public string FederalTaxType { get; set; }
         public string FederalTaxID { get; set; }
     }

@@ -10,7 +10,15 @@ namespace Doppler.Sap.Mappers
 {
     public class BusinessPartnerMapper
     {
-        public static SapBusinessPartner MapDopplerUserToSapBusinessPartner(DopplerUserDTO dopplerUser, string cardCode, SapBusinessPartner fatherBusinessPartner)
+        public static string MapDopplerUserIdToSapBusinessPartnerId(int id, int planType)
+        {
+            var planTypeCode = Dictionary.UserPlanTypesDictionary.TryGetValue(planType, out var code) ? code
+                : throw new ArgumentException("Parameter does not match with any plan type.", $"userPlanTypeId");
+
+            return $"{planTypeCode}{id:00000000000}.";
+        }
+
+        public static SapBusinessPartner MapDopplerUserToSapBusinessPartner(DopplerUserDto dopplerUser, string cardCode, SapBusinessPartner fatherBusinessPartner)
         {
             var newBusinessPartner = new SapBusinessPartner
             {
@@ -25,7 +33,7 @@ namespace Doppler.Sap.Mappers
                 Phone1 = dopplerUser.PhoneNumber ?? "",
                 FederalTaxID = dopplerUser.FederalTaxID.Replace("-", ""),
                 U_B1SYS_VATCtg = dopplerUser.IdConsumerType.HasValue ?
-                    (Dictionaries.ConsumerTypesDictionary.TryGetValue(dopplerUser.IdConsumerType, out string consumerType) ? consumerType : "CF")
+                    (Dictionary.ConsumerTypesDictionary.TryGetValue(dopplerUser.IdConsumerType, out string consumerType) ? consumerType : "CF")
                     : "CF",
                 Currency = fatherBusinessPartner?.Currency ?? "##",
                 AliasName = dopplerUser.Email.ToLower(),
@@ -81,7 +89,7 @@ namespace Doppler.Sap.Mappers
                             Country = dopplerUser.BillingCountryCode != null ? dopplerUser.BillingCountryCode.ToUpper() : "",
                             State = dopplerUser.GroupCode == 115 ? dopplerUser.BillingStateId.ToString() :
                                 (dopplerUser.BillingCountryCode == "AR" ? (dopplerUser.BillingStateId.HasValue ?
-                                (Dictionaries.StatesDictionary.TryGetValue((int)dopplerUser.BillingStateId, out int sapBillStateId) ? sapBillStateId : 99) : 99).ToString("00") : null),
+                                (Dictionary.StatesDictionary.TryGetValue((int)dopplerUser.BillingStateId, out int sapBillStateId) ? sapBillStateId : 99) : 99).ToString("00") : null),
                             AddressType = "bo_BillTo",
                                 BPCode =  cardCode,
                             RowNum = 0
@@ -95,7 +103,7 @@ namespace Doppler.Sap.Mappers
                             Country = dopplerUser.BillingCountryCode != null ? dopplerUser.BillingCountryCode.ToUpper() : "",
                             State = dopplerUser.GroupCode == 115 ? dopplerUser.BillingStateId.ToString() :
                                 (dopplerUser.BillingCountryCode == "AR" ? (dopplerUser.BillingStateId.HasValue ?
-                                (Dictionaries.StatesDictionary.TryGetValue((int)dopplerUser.BillingStateId, out int sapShipStateId) ? sapShipStateId : 99) : 99).ToString("00") : null),
+                                (Dictionary.StatesDictionary.TryGetValue((int)dopplerUser.BillingStateId, out int sapShipStateId) ? sapShipStateId : 99) : 99).ToString("00") : null),
                             AddressType = "bo_ShipTo",
                                 BPCode =  cardCode,
                             RowNum = 1
@@ -121,15 +129,6 @@ namespace Doppler.Sap.Mappers
                 newBusinessPartner.Properties14 = dopplerUser.SAPProperties.SMS ? "tYES" : "tNO";
             }
             return newBusinessPartner;
-        }
-
-        public static string MapDopplerUserIdToSapBusinessPartnerId(int userId, int planType)
-        {
-            var planTypeCode = Dictionaries.userPlanTypesDictionary.TryGetValue(planType, out string code)
-                ? code
-                : throw new ArgumentException("Parameter doesn't match with any plan type.", "userPlanTypeId");
-
-            return $"{planTypeCode}{userId.ToString("00000000000")}.";
         }
     }
 }

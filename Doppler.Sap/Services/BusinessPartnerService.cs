@@ -18,7 +18,7 @@ namespace Doppler.Sap.Services
             _sapService = sapService;
         }
 
-        public async Task CreateOrUpdateBusinessPartner(DopplerUserDTO dopplerUser)
+        public async Task CreateOrUpdateBusinessPartner(DopplerUserDto dopplerUser)
         {
             var existentBusinessPartner = await GetBusinessPartnerIfExists(dopplerUser.Id, dopplerUser.FederalTaxID, dopplerUser.planType.Value);
 

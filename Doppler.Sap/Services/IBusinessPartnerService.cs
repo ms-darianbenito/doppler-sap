@@ -8,6 +8,6 @@ namespace Doppler.Sap.Services
 {
     public interface IBusinessPartnerService
     {
-        Task CreateOrUpdateBusinessPartner(DopplerUserDTO dopplerUser);
+        Task CreateOrUpdateBusinessPartner(DopplerUserDto dopplerUser);
     }
 }

@@ -30,7 +30,7 @@ namespace Doppler.Sap.Factory
 
         public async Task<SapTaskResult> Handle(SapTask dequeuedTask)
         {
-            var businessPartner = await _sapTaskHandler.TryGetBusinessPartner(dequeuedTask);
+            var businessPartner = await _sapTaskHandler.TryGetBusinessPartner(dequeuedTask.BillingRequest.UserId, dequeuedTask.BillingRequest.FiscalID, dequeuedTask.BillingRequest.PlanType);
 
             if (businessPartner == null)
             {

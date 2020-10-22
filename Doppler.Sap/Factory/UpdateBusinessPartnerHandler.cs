@@ -1,3 +1,4 @@
+using Doppler.Sap.Mappers;
 using Doppler.Sap.Models;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
@@ -28,6 +29,8 @@ namespace Doppler.Sap.Factory
 
         public async Task<SapTaskResult> Handle(SapTask dequeuedTask)
         {
+            dequeuedTask = await _sapTaskHandler.CreateBusinessPartnerFromDopplerUser(dequeuedTask);
+
             //SAP uses a non conventional patch where you have to send only the fields that you want to be changed with the new values
             dequeuedTask.BusinessPartner.BPAddresses = GetBPAddressesPatchObject(dequeuedTask.BusinessPartner.BPAddresses);
             dequeuedTask.BusinessPartner.ContactEmployees = GetContactEmployeesPatchObject(dequeuedTask.BusinessPartner.ContactEmployees, dequeuedTask.ExistentBusinessPartner.ContactEmployees);
@@ -35,28 +38,6 @@ namespace Doppler.Sap.Factory
             dequeuedTask.BusinessPartner.FederalTaxID = null;
             dequeuedTask.BusinessPartner.Currency = null;
 
-            var sapResponse = await SendMessage(dequeuedTask);
-
-            var taskResult = new SapTaskResult
-            {
-                IsSuccessful = sapResponse.IsSuccessStatusCode,
-                SapResponseContent = await sapResponse.Content.ReadAsStringAsync(),
-                TaskName = "Updating Business Partner"
-            };
-
-            if (!taskResult.IsSuccessful && taskResult.SapResponseContent.Contains("[OCRD.FatherCard]"))
-            {
-                dequeuedTask.BusinessPartner.FatherCard = !dequeuedTask.BusinessPartner.CardCode.EndsWith(".0")
-                    ? dequeuedTask.BusinessPartner.CardCode.Replace(dequeuedTask.BusinessPartner.CardCode.Substring(dequeuedTask.BusinessPartner.CardCode.IndexOf(".")), ".0")
-                    : null;
-                return await RetryUpdateBusinessPartner(dequeuedTask);
-            }
-
-            return taskResult;
-        }
-
-        private async Task<SapTaskResult> RetryUpdateBusinessPartner(SapTask dequeuedTask)
-        {
             var sapResponse = await SendMessage(dequeuedTask);
 
             var taskResult = new SapTaskResult

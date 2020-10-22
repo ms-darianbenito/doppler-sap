@@ -1,3 +1,4 @@
+using Doppler.Sap.Mappers;
 using Doppler.Sap.Models;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
@@ -26,6 +27,8 @@ namespace Doppler.Sap.Factory
 
         public async Task<SapTaskResult> Handle(SapTask dequeuedTask)
         {
+            dequeuedTask = await _sapTaskHandler.CreateBusinessPartnerFromDopplerUser(dequeuedTask);
+
             var message = new HttpRequestMessage()
             {
                 RequestUri = new Uri($"{_sapConfig.BaseServerUrl}BusinessPartners/"),

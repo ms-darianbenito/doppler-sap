@@ -6,6 +6,7 @@ namespace Doppler.Sap.Models
     {
         public SapBusinessPartner BusinessPartner { get; set; }
         public SapBusinessPartner ExistentBusinessPartner { get; set; }
+        public DopplerUserDto DopplerUser { get; set; }
         public SapCurrencyRate CurrencyRate { get; set; }
         public SapSaleOrderModel BillingRequest { get; set; }
         public SapTaskEnum TaskType { get; set; }

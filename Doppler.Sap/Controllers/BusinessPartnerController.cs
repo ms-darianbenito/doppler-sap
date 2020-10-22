@@ -14,11 +14,11 @@ namespace Doppler.Sap.Controllers
     [Authorize]
     public class BusinessPartnerController
     {
-        private readonly ILogger<BillingController> _logger;
+        private readonly ILogger<BusinessPartnerController> _logger;
         private readonly IBusinessPartnerService _businessPartnerService;
 
-        public BusinessPartnerController(ILogger<BillingController> logger, IBusinessPartnerService billingService) =>
-            (_logger, _businessPartnerService) = (logger, billingService);
+        public BusinessPartnerController(ILogger<BusinessPartnerController> logger, IBusinessPartnerService businessPartnerService) =>
+            (_logger, _businessPartnerService) = (logger, businessPartnerService);
 
         [HttpPost("CreateOrUpdateBusinessPartner")]
         public async Task<IActionResult> CreateOrUpdateBusinessPartner([FromBody] DopplerUserDto dopplerUser)
@@ -34,7 +34,7 @@ namespace Doppler.Sap.Controllers
             {
                 await _businessPartnerService.CreateOrUpdateBusinessPartner(dopplerUser);
 
-                return new OkResult();
+                return new OkObjectResult("Successfully");
             }
             catch (Exception e)
             {
@@ -60,7 +60,7 @@ namespace Doppler.Sap.Controllers
                 _logger.LogInformation($"{dopplerUser.Email} won't be sent to SAP because it doesn't have a cuit value");
                 return "Invalid cuit value.";
             }
-            if (!dopplerUser.planType.HasValue)
+            if (!dopplerUser.PlanType.HasValue)
             {
                 _logger.LogInformation($"{dopplerUser.Email} won't be sent to SAP because it doesn't have a plan type id");
                 return "Invalid plan type value.";

@@ -49,7 +49,7 @@ namespace Doppler.Sap.Test
                     RouteId = "route"
                 });
 
-            sapTaskHandlerMock.Setup(x => x.TryGetBusinessPartner(It.IsAny<SapTask>()))
+            sapTaskHandlerMock.Setup(x => x.TryGetBusinessPartner(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<int>()))
                 .ReturnsAsync(new SapBusinessPartner
                 {
                     FederalTaxID = "FederalTaxId",

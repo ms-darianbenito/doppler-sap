@@ -77,9 +77,9 @@ namespace Doppler.Sap.Factory
             return _sapCookies;
         }
 
-        public async Task<SapBusinessPartner> TryGetBusinessPartner(SapTask task)
+        public async Task<SapBusinessPartner> TryGetBusinessPartner(int userId, string cuit, int userPlanTypeId)
         {
-            var incompleteCardCode = BusinessPartnerMapper.MapDopplerUserIdToSapBusinessPartnerId(task.BillingRequest.UserId, task.BillingRequest.PlanType);
+            var incompleteCardCode = BusinessPartnerMapper.MapDopplerUserIdToSapBusinessPartnerId(userId, userPlanTypeId);
 
             var message = new HttpRequestMessage
             {
@@ -97,9 +97,67 @@ namespace Doppler.Sap.Factory
             sapResponse.EnsureSuccessStatusCode();
 
             var businessPartnersList = JsonConvert.DeserializeObject<SapBusinessPartnerList>(await sapResponse.Content.ReadAsStringAsync());
-            var businessPartner = businessPartnersList.value.FirstOrDefault(x => x.FederalTaxID == task.BillingRequest.FiscalID);
+            var businessPartner = businessPartnersList.value.FirstOrDefault(x => x.FederalTaxID == cuit);
+
+            if (businessPartner == null)
+            {
+                var amountBusinessPartnersForSameUser = businessPartnersList.value.Count();
+                if (amountBusinessPartnersForSameUser >= _sapConfig.MaxAmountAllowedAccounts)
+                {
+                    throw new ArgumentOutOfRangeException("User can't have more than 10 accounts in Sap");
+                }
+                businessPartner = new SapBusinessPartner()
+                {
+                    CardCode = $"{incompleteCardCode}{amountBusinessPartnersForSameUser}"
+                };
+            }
 
             return businessPartner;
+        }
+
+        public async Task<SapBusinessPartner> TryGetBusinessPartnerByCardCode(string cardCode)
+        {
+            var message = new HttpRequestMessage()
+            {
+                RequestUri = new Uri($"{_sapConfig.BaseServerUrl}BusinessPartners('{cardCode}')"),
+                Method = HttpMethod.Get
+            };
+
+            var cookies = await StartSession();
+            message.Headers.Add("Cookie", cookies.B1Session);
+            message.Headers.Add("Cookie", cookies.RouteId);
+
+            var client = _httpClientFactory.CreateClient();
+            var sapResponse = await client.SendAsync(message);
+
+            if (sapResponse.IsSuccessStatusCode)
+            {
+                return JsonConvert.DeserializeObject<SapBusinessPartner>((await sapResponse.Content.ReadAsStringAsync()));
+            }
+            return null;
+        }
+
+        public async Task<SapTask> CreateBusinessPartnerFromDopplerUser(SapTask task)
+        {
+            var existentBusinessPartner = await TryGetBusinessPartner(task.DopplerUser.Id, task.DopplerUser.FederalTaxID, task.DopplerUser.PlanType.Value);
+
+            var fatherCard = task.DopplerUser.GroupCode == 115 ?
+                    $"CR{task.DopplerUser.Id:0000000000000}" :
+                    (task.DopplerUser.IsClientManager ?
+                    $"CD{int.Parse("400" + task.DopplerUser.Id.ToString()):0000000000000}" :
+                    $"CD{task.DopplerUser.Id:0000000000000}");
+
+            var fatherBusinessPartner = await TryGetBusinessPartnerByCardCode(fatherCard);
+            if (fatherBusinessPartner == null && !existentBusinessPartner.CardCode.EndsWith(".0"))
+            {
+                fatherCard = existentBusinessPartner.CardCode.Replace(existentBusinessPartner.CardCode.Substring(existentBusinessPartner.CardCode.IndexOf(".")), ".0");
+                fatherBusinessPartner = await TryGetBusinessPartnerByCardCode(fatherCard);
+            }
+
+            task.BusinessPartner = BusinessPartnerMapper.MapDopplerUserToSapBusinessPartner(task.DopplerUser, existentBusinessPartner.CardCode, fatherBusinessPartner);
+            task.ExistentBusinessPartner = existentBusinessPartner;
+
+            return task;
         }
     }
 }

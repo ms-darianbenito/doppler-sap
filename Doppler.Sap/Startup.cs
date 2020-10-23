@@ -78,11 +78,14 @@ namespace Doppler.Sap
                 });
             services.AddTransient<ISapTaskHandler, SapTaskHandler>();
             services.AddTransient<IBillingService, BillingService>();
+            services.AddTransient<IBusinessPartnerService, BusinessPartnerService>();
             services.AddSingleton<IQueuingService, QueuingService>();
             services.AddTransient<ISapService, SapService>();
             services.Configure<SapConfig>(Configuration.GetSection(nameof(SapConfig)));
             services.AddTransient<SetCurrencyRateHandler>();
             services.AddTransient<BillingRequestHandler>();
+            services.AddTransient<CreateBusinessPartnerHandler>();
+            services.AddTransient<UpdateBusinessPartnerHandler>();
             services.AddTransient<ISapTaskFactory, SapTaskFactory>();
             services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
             services.AddTransient<ISlackService, SlackService>();

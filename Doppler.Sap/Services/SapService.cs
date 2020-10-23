@@ -1,6 +1,6 @@
-using System.Threading.Tasks;
 using Doppler.Sap.Factory;
 using Doppler.Sap.Models;
+using System.Threading.Tasks;
 
 namespace Doppler.Sap.Services
 {

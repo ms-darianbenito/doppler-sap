@@ -6,6 +6,8 @@ namespace Doppler.Sap.Factory
     public interface ISapTaskHandler
     {
         Task<SapLoginCookies> StartSession();
-        Task<SapBusinessPartner> TryGetBusinessPartner(SapTask task);
+        Task<SapBusinessPartner> TryGetBusinessPartner(int userId, string cuit, int userPlanTypeId);
+        Task<SapBusinessPartner> TryGetBusinessPartnerByCardCode(string cardCode);
+        Task<SapTask> CreateBusinessPartnerFromDopplerUser(SapTask task);
     }
 }

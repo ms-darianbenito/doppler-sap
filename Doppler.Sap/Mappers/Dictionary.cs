@@ -67,7 +67,7 @@ namespace Doppler.Sap.Mappers
             {2209,13}, // Santa Fe
             {2210,14}, // Santiago del Estero
             {2211,24}, // Tierra del Fuego
-            {2212,15}, // Tucumán
+            {2212,15} // Tucumán
         };
     }
 }

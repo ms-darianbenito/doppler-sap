@@ -38,11 +38,11 @@ namespace Doppler.Sap.Controllers
             }
             catch (Exception e)
             {
-                _logger.LogError($"Failed at mapping data from user: {dopplerUser.Id}, Object sent: {JsonConvert.SerializeObject(dopplerUser)} ", e);
+                _logger.LogError(e, $"Failed at creating/updating user: {dopplerUser.Id}, Object sent: {JsonConvert.SerializeObject(dopplerUser)} ");
                 return new ObjectResult(new
                 {
                     StatusCode = 400,
-                    ErrorMessage = $"Failed at mapping data from user: {dopplerUser.Id}",
+                    ErrorMessage = $"Failed at creating/updating user: {dopplerUser.Id}",
                     ExceptionLogged = e
                 });
             }

@@ -8,8 +8,28 @@ namespace Microsoft.Extensions.DependencyInjection
     {
         public static void AddSapServices(this IServiceCollection services)
         {
-            services.AddTransient<IBillingService, BillingService>();
-            services.AddTransient<IBusinessPartnerService, BusinessPartnerService>();
+            services.AddSingleton<DummyBillingService>();
+            services.AddTransient<BillingService>();
+            services.AddSingleton<DummyBusinessPartnerService>();
+            services.AddTransient<BusinessPartnerService>();
+
+            services.AddTransient<IBillingService>(serviceProvider =>
+            {
+                var sapProviderOptions = serviceProvider.GetRequiredService<IOptions<SapConfig>>();
+
+                return sapProviderOptions.Value.UseDummyData
+                    ? (IBillingService)serviceProvider.GetRequiredService<DummyBillingService>()
+                    : serviceProvider.GetRequiredService<BillingService>();
+            });
+
+            services.AddTransient<IBusinessPartnerService>(serviceProvider =>
+            {
+                var sapProviderOptions = serviceProvider.GetRequiredService<IOptions<SapConfig>>();
+
+                return sapProviderOptions.Value.UseDummyData
+                    ? (IBusinessPartnerService)serviceProvider.GetRequiredService<DummyBusinessPartnerService>()
+                    : serviceProvider.GetRequiredService<BusinessPartnerService>();
+            });
         }
     }
 }

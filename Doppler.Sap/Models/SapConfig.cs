@@ -9,5 +9,6 @@ namespace Doppler.Sap.Models
         public string SlackAlertUrl { get; set; }
         public int MaxAmountAllowedAccounts { get; set; }
         public int SessionTimeoutPadding { get; set; }
+        public bool UseDummyData { get; set; }
     }
 }

@@ -76,9 +76,8 @@ namespace Doppler.Sap
                     ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator,
                     UseCookies = false
                 });
+            services.AddSapServices();
             services.AddTransient<ISapTaskHandler, SapTaskHandler>();
-            services.AddTransient<IBillingService, BillingService>();
-            services.AddTransient<IBusinessPartnerService, BusinessPartnerService>();
             services.AddSingleton<IQueuingService, QueuingService>();
             services.AddTransient<ISapService, SapService>();
             services.Configure<SapConfig>(Configuration.GetSection(nameof(SapConfig)));

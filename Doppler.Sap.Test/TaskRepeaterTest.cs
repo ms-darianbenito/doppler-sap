@@ -81,7 +81,7 @@ namespace Doppler.Sap.Test
                         FederalTaxID = "27111111115",
                         PlanType = 1
                     },
-                    TaskType = SapTaskEnum.UpdateBusinessPartner
+                    TaskType = SapTaskEnum.CreateOrUpdateBusinessPartner
                 });
 
             var sapServiceMock = new Mock<ISapService>();
@@ -128,7 +128,7 @@ namespace Doppler.Sap.Test
                         Id = 1,
                         PlanType = 1
                     },
-                    TaskType = SapTaskEnum.CreateBusinessPartner
+                    TaskType = SapTaskEnum.CreateOrUpdateBusinessPartner
                 });
 
             var sapServiceMock = new Mock<ISapService>();

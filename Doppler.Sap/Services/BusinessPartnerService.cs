@@ -18,27 +18,13 @@ namespace Doppler.Sap.Services
 
         public Task CreateOrUpdateBusinessPartner(DopplerUserDto dopplerUser)
         {
-            if (string.IsNullOrEmpty(dopplerUser.FederalTaxID))
-            {
-                _queuingService.AddToTaskQueue(
-                    new SapTask()
-                    {
-                        TaskType = SapTaskEnum.CreateBusinessPartner,
-                        DopplerUser = dopplerUser
-                    }
-                );
-            }
-            else
-            {
-                _queuingService.AddToTaskQueue(
-                    new SapTask()
-                    {
-                        TaskType = SapTaskEnum.UpdateBusinessPartner,
-                        DopplerUser = dopplerUser
-                    }
-                );
-            }
-
+            _queuingService.AddToTaskQueue(
+                new SapTask()
+                {
+                    TaskType = SapTaskEnum.CreateOrUpdateBusinessPartner,
+                    DopplerUser = dopplerUser
+                }
+            );
             return Task.CompletedTask;
         }
     }

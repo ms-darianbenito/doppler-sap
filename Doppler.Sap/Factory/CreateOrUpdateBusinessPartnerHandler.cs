@@ -31,14 +31,9 @@ namespace Doppler.Sap.Factory
         {
             dequeuedTask = await _sapTaskHandler.CreateBusinessPartnerFromDopplerUser(dequeuedTask);
 
-            if (string.IsNullOrEmpty(dequeuedTask.ExistentBusinessPartner.FederalTaxID))
-            {
-                return await CreateBusinessPartner(dequeuedTask);
-            }
-            else
-            {
-                return await UpdateBusinessPartner(dequeuedTask);
-            }
+            return string.IsNullOrEmpty(dequeuedTask.ExistentBusinessPartner.FederalTaxID) ?
+                await CreateBusinessPartner(dequeuedTask) :
+                await UpdateBusinessPartner(dequeuedTask);
         }
 
         private async Task<SapTaskResult> CreateBusinessPartner(SapTask dequeuedTask)

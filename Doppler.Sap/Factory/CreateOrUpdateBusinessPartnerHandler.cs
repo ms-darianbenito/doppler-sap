@@ -38,21 +38,8 @@ namespace Doppler.Sap.Factory
 
         private async Task<SapTaskResult> CreateBusinessPartner(SapTask dequeuedTask)
         {
-            var message = new HttpRequestMessage()
-            {
-                RequestUri = new Uri($"{_sapConfig.BaseServerUrl}BusinessPartners/"),
-                Content = new StringContent(JsonConvert.SerializeObject(dequeuedTask.BusinessPartner),
-                    Encoding.UTF8,
-                    "application/json"),
-                Method = HttpMethod.Post
-            };
-
-            var cookies = await _sapTaskHandler.StartSession();
-            message.Headers.Add("Cookie", cookies.B1Session);
-            message.Headers.Add("Cookie", cookies.RouteId);
-
-            var client = _httpClientFactory.CreateClient();
-            var sapResponse = await client.SendAsync(message);
+            var uriString = $"{_sapConfig.BaseServerUrl}BusinessPartners/";
+            var sapResponse = await SendMessage(dequeuedTask.BusinessPartner, uriString, HttpMethod.Post);
 
             var taskResult = new SapTaskResult
             {
@@ -73,7 +60,8 @@ namespace Doppler.Sap.Factory
             dequeuedTask.BusinessPartner.FederalTaxID = null;
             dequeuedTask.BusinessPartner.Currency = null;
 
-            var sapResponse = await SendMessage(dequeuedTask);
+            var uriString = $"{_sapConfig.BaseServerUrl}BusinessPartners('{dequeuedTask.ExistentBusinessPartner.CardCode}')";
+            var sapResponse = await SendMessage(dequeuedTask.BusinessPartner, uriString, HttpMethod.Patch);
 
             var taskResult = new SapTaskResult
             {
@@ -85,19 +73,19 @@ namespace Doppler.Sap.Factory
             return taskResult;
         }
 
-        private async Task<HttpResponseMessage> SendMessage(SapTask dequeuedTask)
+        private async Task<HttpResponseMessage> SendMessage(SapBusinessPartner businessPartner, string uriString, HttpMethod method)
         {
             var message = new HttpRequestMessage()
             {
-                RequestUri = new Uri($"{_sapConfig.BaseServerUrl}BusinessPartners('{dequeuedTask.ExistentBusinessPartner.CardCode}')"),
-                Content = new StringContent(JsonConvert.SerializeObject(dequeuedTask.BusinessPartner,
+                RequestUri = new Uri(uriString),
+                Content = new StringContent(JsonConvert.SerializeObject(businessPartner,
                     new JsonSerializerSettings
                     {
                         NullValueHandling = NullValueHandling.Ignore
                     }),
                     Encoding.UTF8,
                     "application/json"),
-                Method = HttpMethod.Patch
+                Method = method
             };
 
             var cookies = await _sapTaskHandler.StartSession();

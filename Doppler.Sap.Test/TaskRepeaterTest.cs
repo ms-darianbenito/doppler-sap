@@ -61,7 +61,7 @@ namespace Doppler.Sap.Test
         }
 
         [Fact]
-        public async Task TaskRepeater_ShouldBeSentUpdatedBusinessPartnerToSap_WhenQueueHasOneValidElement()
+        public async Task TaskRepeater_ShouldBeSentBusinessPartnerToSap_WhenQueueHasOneValidElement()
         {
             var queueMock = new Mock<IQueuingService>();
             var count = 0;
@@ -81,54 +81,7 @@ namespace Doppler.Sap.Test
                         FederalTaxID = "27111111115",
                         PlanType = 1
                     },
-                    TaskType = SapTaskEnum.UpdateBusinessPartner
-                });
-
-            var sapServiceMock = new Mock<ISapService>();
-            sapServiceMock.Setup(x => x.SendToSap(It.IsAny<SapTask>()))
-                .ReturnsAsync(new SapTaskResult
-                {
-                    IsSuccessful = true,
-                    TaskName = "Test"
-                });
-
-            var loggerMock = new Mock<ILogger<TaskRepeater>>();
-
-            var sapTaskHandler = new TaskRepeater(loggerMock.Object, queueMock.Object, sapServiceMock.Object);
-
-            await sapTaskHandler.StartAsync(cts.Token);
-
-            loggerMock.Verify(
-                x => x.Log(
-                    LogLevel.Information,
-                    It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((o, t) => o.ToString().Equals("Succeeded at Test.")),
-                    It.IsAny<Exception>(),
-                    (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
-                Times.Exactly(1));
-        }
-
-        [Fact]
-        public async Task TaskRepeater_ShouldBeSentNewBusinessPartnerToSap_WhenQueueHasOneValidElement()
-        {
-            var queueMock = new Mock<IQueuingService>();
-            var count = 0;
-            var cts = new CancellationTokenSource();
-            queueMock.Setup(x => x.GetFromTaskQueue())
-                .Callback(() =>
-                {
-                    count++;
-                    if (count == 1)
-                        cts.Cancel();
-                })
-                .Returns(new SapTask
-                {
-                    DopplerUser = new DopplerUserDto
-                    {
-                        Id = 1,
-                        PlanType = 1
-                    },
-                    TaskType = SapTaskEnum.CreateBusinessPartner
+                    TaskType = SapTaskEnum.CreateOrUpdateBusinessPartner
                 });
 
             var sapServiceMock = new Mock<ISapService>();

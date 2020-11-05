@@ -11,13 +11,13 @@ using System.Threading.Tasks;
 
 namespace Doppler.Sap.Factory
 {
-    public class UpdateBusinessPartnerHandler
+    public class CreateOrUpdateBusinessPartnerHandler
     {
         private readonly SapConfig _sapConfig;
         private readonly ISapTaskHandler _sapTaskHandler;
         private readonly IHttpClientFactory _httpClientFactory;
 
-        public UpdateBusinessPartnerHandler(
+        public CreateOrUpdateBusinessPartnerHandler(
             IOptions<SapConfig> sapConfig,
             ISapTaskHandler sapTaskHandler,
             IHttpClientFactory httpClientFactory)
@@ -31,6 +31,28 @@ namespace Doppler.Sap.Factory
         {
             dequeuedTask = await _sapTaskHandler.CreateBusinessPartnerFromDopplerUser(dequeuedTask);
 
+            return string.IsNullOrEmpty(dequeuedTask.ExistentBusinessPartner.FederalTaxID) ?
+                await CreateBusinessPartner(dequeuedTask) :
+                await UpdateBusinessPartner(dequeuedTask);
+        }
+
+        private async Task<SapTaskResult> CreateBusinessPartner(SapTask dequeuedTask)
+        {
+            var uriString = $"{_sapConfig.BaseServerUrl}BusinessPartners/";
+            var sapResponse = await SendMessage(dequeuedTask.BusinessPartner, uriString, HttpMethod.Post);
+
+            var taskResult = new SapTaskResult
+            {
+                IsSuccessful = sapResponse.IsSuccessStatusCode,
+                SapResponseContent = await sapResponse.Content.ReadAsStringAsync(),
+                TaskName = "Creating Business Partner"
+            };
+
+            return taskResult;
+        }
+
+        private async Task<SapTaskResult> UpdateBusinessPartner(SapTask dequeuedTask)
+        {
             //SAP uses a non conventional patch where you have to send only the fields that you want to be changed with the new values
             dequeuedTask.BusinessPartner.BPAddresses = GetBPAddressesPatchObject(dequeuedTask.BusinessPartner.BPAddresses);
             dequeuedTask.BusinessPartner.ContactEmployees = GetContactEmployeesPatchObject(dequeuedTask.BusinessPartner.ContactEmployees, dequeuedTask.ExistentBusinessPartner.ContactEmployees);
@@ -38,7 +60,8 @@ namespace Doppler.Sap.Factory
             dequeuedTask.BusinessPartner.FederalTaxID = null;
             dequeuedTask.BusinessPartner.Currency = null;
 
-            var sapResponse = await SendMessage(dequeuedTask);
+            var uriString = $"{_sapConfig.BaseServerUrl}BusinessPartners('{dequeuedTask.ExistentBusinessPartner.CardCode}')";
+            var sapResponse = await SendMessage(dequeuedTask.BusinessPartner, uriString, HttpMethod.Patch);
 
             var taskResult = new SapTaskResult
             {
@@ -50,18 +73,19 @@ namespace Doppler.Sap.Factory
             return taskResult;
         }
 
-        private async Task<HttpResponseMessage> SendMessage(SapTask dequeuedTask)
+        private async Task<HttpResponseMessage> SendMessage(SapBusinessPartner businessPartner, string uriString, HttpMethod method)
         {
             var message = new HttpRequestMessage()
             {
-                RequestUri = new Uri($"{_sapConfig.BaseServerUrl}BusinessPartners('{dequeuedTask.ExistentBusinessPartner.CardCode}')"),
-                Content = new StringContent(JsonConvert.SerializeObject(dequeuedTask.BusinessPartner, new JsonSerializerSettings
-                {
-                    NullValueHandling = NullValueHandling.Ignore
-                })
-                        , Encoding.UTF8
-                        , "application/json"),
-                Method = HttpMethod.Patch
+                RequestUri = new Uri(uriString),
+                Content = new StringContent(JsonConvert.SerializeObject(businessPartner,
+                    new JsonSerializerSettings
+                    {
+                        NullValueHandling = NullValueHandling.Ignore
+                    }),
+                    Encoding.UTF8,
+                    "application/json"),
+                Method = method
             };
 
             var cookies = await _sapTaskHandler.StartSession();

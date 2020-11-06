@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Doppler.Sap
 {
-    public class TaskRepeater : IHostedService
+    public class TaskRepeater : BackgroundService
     {
         private readonly ILogger<TaskRepeater> _logger;
         private readonly IQueuingService _queuingService;
@@ -20,11 +20,11 @@ namespace Doppler.Sap
             _sapService = sapService;
         }
 
-        public async Task StartAsync(CancellationToken cancellationToken)
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             _logger.LogInformation("Starting service.");
 
-            while (!cancellationToken.IsCancellationRequested)
+            while (!stoppingToken.IsCancellationRequested)
             {
                 var dequeuedTask = _queuingService.GetFromTaskQueue();
 
@@ -50,15 +50,9 @@ namespace Doppler.Sap
                 }
                 else
                 {
-                    await Task.Delay(3000, cancellationToken);
+                    await Task.Delay(3000, stoppingToken);
                 }
             }
-        }
-
-        public Task StopAsync(CancellationToken cancellationToken)
-        {
-            _logger.LogInformation("NormalHostedService stopped.");
-            return Task.CompletedTask;
         }
     }
 }

@@ -1,3 +1,4 @@
+using Doppler.Sap.Enums;
 using Doppler.Sap.Models;
 using Doppler.Sap.Services;
 using System;
@@ -25,7 +26,7 @@ namespace Doppler.Sap.Mappers
                 CardCode = cardCode,
                 CardName = $"{dopplerUser.FirstName} {dopplerUser.LastName}".ToUpper(),
                 GroupCode = dopplerUser.GroupCode,
-                PayTermsGrpCode = 5,
+                PayTermsGrpCode = dopplerUser.PaymentMethod == (int)PaymentMethodEnum.MP ? (int)PayTermsGroupEnum.MP : (int)PayTermsGroupEnum.DEFAULT,
                 ContactPerson = new MailAddress((dopplerUser.BillingEmails != null && dopplerUser.BillingEmails[0] != String.Empty) ?
                 dopplerUser.BillingEmails[0].ToLower() :
                     dopplerUser.Email.ToLower()).User,

@@ -32,6 +32,7 @@ namespace Doppler.Sap.Models
         public string BillingCountryCode { get; set; }
         public int? BillingStateId { get; set; }
         public int? PlanType { get; set; }
+        public int PaymentMethod { get; set; }
         public string FederalTaxType { get; set; }
         public string FederalTaxID { get; set; }
     }

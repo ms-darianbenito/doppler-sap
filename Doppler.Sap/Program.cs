@@ -29,10 +29,10 @@ namespace Doppler.Sap
                 {
                     webBuilder.UseStartup<Startup>();
                 })
-                .ConfigureLogging((hostingContext, builder) => { });
-                //.ConfigureServices(services =>
-                //{
-                //    services.AddHostedService<TaskRepeater>();
-                //});
+                .ConfigureLogging((hostingContext, builder) => { })
+                .ConfigureServices(services =>
+                {
+                    services.AddHostedService<TaskRepeater>();
+                });
     }
 }

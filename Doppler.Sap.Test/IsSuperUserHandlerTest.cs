@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Mvc.Testing;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -8,11 +7,11 @@ using Xunit;
 namespace Doppler.Sap.Test
 {
 
-    public class IsSuperUserHandlerTest : IClassFixture<WebApplicationFactory<Startup>>
+    public class IsSuperUserHandlerTest : IClassFixture<TestServerFixture>
     {
-        private readonly WebApplicationFactory<Startup> _factory;
+        private readonly TestServerFixture _factory;
 
-        public IsSuperUserHandlerTest(WebApplicationFactory<Startup> factory)
+        public IsSuperUserHandlerTest(TestServerFixture factory)
         {
             _factory = factory;
         }
@@ -25,7 +24,7 @@ namespace Doppler.Sap.Test
             // Arrange
             const int clientId = 222541;
 
-            var client = _factory.CreateClient();
+            var client = _factory.Client;
 
             var request = new HttpRequestMessage(HttpMethod.Get, $"https://localhost/accounts/doppler/{clientId}/invoices");
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);

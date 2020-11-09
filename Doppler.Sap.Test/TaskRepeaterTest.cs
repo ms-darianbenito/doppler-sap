@@ -16,15 +16,13 @@ namespace Doppler.Sap.Test
         public async Task TaskRepeater_ShouldBeSentcurrencyToSap_WhenQueueHasOneValidElement()
         {
             var queueMock = new Mock<IQueuingService>();
-            var count = 0;
-            var cts = new CancellationTokenSource();
-            queueMock.Setup(x => x.GetFromTaskQueue())
-                .Callback(() =>
-                {
-                    count++;
-                    if (count == 1)
-                        cts.Cancel();
-                })
+            var sapServiceMock = new Mock<ISapService>();
+            var loggerMock = new Mock<ILogger<TaskRepeater>>();
+
+            using var sapTaskHandler = new TaskRepeater(loggerMock.Object, queueMock.Object, sapServiceMock.Object);
+
+            // We want only a result
+            queueMock.SetupSequence(x => x.GetFromTaskQueue())
                 .Returns(new SapTask
                 {
                     CurrencyRate = new SapCurrencyRate
@@ -36,7 +34,6 @@ namespace Doppler.Sap.Test
                     TaskType = SapTaskEnum.CurrencyRate
                 });
 
-            var sapServiceMock = new Mock<ISapService>();
             sapServiceMock.Setup(x => x.SendToSap(It.IsAny<SapTask>()))
                 .ReturnsAsync(new SapTaskResult
                 {
@@ -44,11 +41,12 @@ namespace Doppler.Sap.Test
                     TaskName = "Test"
                 });
 
-            var loggerMock = new Mock<ILogger<TaskRepeater>>();
+            await sapTaskHandler.StartAsync(CancellationToken.None);
 
-            var sapTaskHandler = new TaskRepeater(loggerMock.Object, queueMock.Object, sapServiceMock.Object);
-
-            await sapTaskHandler.StartAsync(cts.Token);
+            // Consider to wait a little if some of the expected actions occurs
+            // asynchronously
+            // await Task.Delay(5);
+            await sapTaskHandler.StopAsync(CancellationToken.None);
 
             loggerMock.Verify(
                 x => x.Log(
@@ -64,15 +62,12 @@ namespace Doppler.Sap.Test
         public async Task TaskRepeater_ShouldBeSentBusinessPartnerToSap_WhenQueueHasOneValidElement()
         {
             var queueMock = new Mock<IQueuingService>();
-            var count = 0;
-            var cts = new CancellationTokenSource();
-            queueMock.Setup(x => x.GetFromTaskQueue())
-                .Callback(() =>
-                {
-                    count++;
-                    if (count == 1)
-                        cts.Cancel();
-                })
+            var sapServiceMock = new Mock<ISapService>();
+            var loggerMock = new Mock<ILogger<TaskRepeater>>();
+
+            using var sapTaskHandler = new TaskRepeater(loggerMock.Object, queueMock.Object, sapServiceMock.Object);
+
+            queueMock.SetupSequence(x => x.GetFromTaskQueue())
                 .Returns(new SapTask
                 {
                     DopplerUser = new DopplerUserDto
@@ -84,7 +79,6 @@ namespace Doppler.Sap.Test
                     TaskType = SapTaskEnum.CreateOrUpdateBusinessPartner
                 });
 
-            var sapServiceMock = new Mock<ISapService>();
             sapServiceMock.Setup(x => x.SendToSap(It.IsAny<SapTask>()))
                 .ReturnsAsync(new SapTaskResult
                 {
@@ -92,11 +86,12 @@ namespace Doppler.Sap.Test
                     TaskName = "Test"
                 });
 
-            var loggerMock = new Mock<ILogger<TaskRepeater>>();
+            await sapTaskHandler.StartAsync(CancellationToken.None);
 
-            var sapTaskHandler = new TaskRepeater(loggerMock.Object, queueMock.Object, sapServiceMock.Object);
-
-            await sapTaskHandler.StartAsync(cts.Token);
+            // Consider to wait a little if some of the expected actions occurs
+            // asynchronously
+            // await Task.Delay(5);
+            await sapTaskHandler.StopAsync(CancellationToken.None);
 
             loggerMock.Verify(
                 x => x.Log(

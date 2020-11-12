@@ -19,5 +19,13 @@ namespace Doppler.Sap.Controllers
 
             return new OkObjectResult(response);
         }
+
+        [HttpGet("/test-sap-us-connection")]
+        public async Task<IActionResult> TestSapUsConnection()
+        {
+            var response = await _testSapService.TestSapUsConnection();
+
+            return new OkObjectResult(response);
+        }
     }
 }

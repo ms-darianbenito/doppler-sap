@@ -3,8 +3,11 @@ using Doppler.Sap.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Doppler.Sap.Controllers
@@ -17,24 +20,27 @@ namespace Doppler.Sap.Controllers
         private readonly ILogger<BusinessPartnerController> _logger;
         private readonly IBusinessPartnerService _businessPartnerService;
 
-        public BusinessPartnerController(ILogger<BusinessPartnerController> logger, IBusinessPartnerService businessPartnerService) =>
-            (_logger, _businessPartnerService) = (logger, businessPartnerService);
+        public BusinessPartnerController(ILogger<BusinessPartnerController> logger, IBusinessPartnerService businessPartnerService)
+        {
+            _logger = logger;
+            _businessPartnerService = businessPartnerService;
+        }
 
         [HttpPost("CreateOrUpdateBusinessPartner")]
         public async Task<IActionResult> CreateOrUpdateBusinessPartner([FromBody] DopplerUserDto dopplerUser)
         {
             _logger.LogInformation($"Received user: {dopplerUser.Email}");
-            var userVerificationError = VerifyUserInformation(dopplerUser);
-            if (!string.IsNullOrEmpty(userVerificationError))
-            {
-                return new BadRequestObjectResult(userVerificationError);
-            }
 
             try
             {
                 await _businessPartnerService.CreateOrUpdateBusinessPartner(dopplerUser);
 
                 return new OkObjectResult("Successfully");
+            }
+            catch (ValidationException e)
+            {
+                _logger.LogError(e, $"Failed at creating/updating user: {dopplerUser.Id}. Because the user has a validation error: {e.Message}");
+                return new BadRequestObjectResult(e.Message);
             }
             catch (Exception e)
             {
@@ -46,26 +52,6 @@ namespace Doppler.Sap.Controllers
                     ExceptionLogged = e
                 });
             }
-        }
-
-        private string VerifyUserInformation(DopplerUserDto dopplerUser)
-        {
-            if (dopplerUser.BillingCountryCode != "AR")
-            {
-                _logger.LogInformation($"{dopplerUser.Email} won't be sent to SAP because it's not from AR");
-                return "Invalid billing country value.";
-            }
-            if (String.IsNullOrEmpty(dopplerUser.FederalTaxID))
-            {
-                _logger.LogInformation($"{dopplerUser.Email} won't be sent to SAP because it doesn't have a cuit value");
-                return "Invalid cuit value.";
-            }
-            if (!dopplerUser.PlanType.HasValue)
-            {
-                _logger.LogInformation($"{dopplerUser.Email} won't be sent to SAP because it doesn't have a plan type id");
-                return "Invalid plan type value.";
-            }
-            return string.Empty;
         }
     }
 }

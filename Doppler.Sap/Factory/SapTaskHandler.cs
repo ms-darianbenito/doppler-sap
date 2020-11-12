@@ -1,36 +1,41 @@
+using Doppler.Sap.Mappers.BusinessPartner;
+using Doppler.Sap.Models;
+using Doppler.Sap.Utils;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using Doppler.Sap.Mappers;
-using Doppler.Sap.Models;
-using Doppler.Sap.Utils;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
-using Microsoft.Extensions.Options;
-using Newtonsoft.Json.Linq;
 
 namespace Doppler.Sap.Factory
 {
     public class SapTaskHandler : ISapTaskHandler
     {
         private readonly SapConfig _sapConfig;
+        private SapServiceConfig _sapServiceConfig;
         private SapLoginCookies _sapCookies;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly ILogger<SapTaskHandler> _logger;
         private readonly IDateTimeProvider _dateTimeProvider;
+        private readonly IBusinessPartnerMapper _businessPartnerMapper;
 
         public SapTaskHandler(
-            IOptions<SapConfig> sapConfig,
+            SapConfig sapConfig,
             ILogger<SapTaskHandler> logger,
             IHttpClientFactory httpClientFactory,
-            IDateTimeProvider dateTimeProvider)
+            IDateTimeProvider dateTimeProvider,
+            SapServiceConfig sapServiceConfig,
+            IBusinessPartnerMapper businessPartnerMapper)
         {
-            _sapConfig = sapConfig.Value;
+            _sapConfig = sapConfig;
             _logger = logger;
             _httpClientFactory = httpClientFactory;
             _dateTimeProvider = dateTimeProvider;
+            _sapServiceConfig = sapServiceConfig;
+            _businessPartnerMapper = businessPartnerMapper;
         }
 
         public async Task<SapLoginCookies> StartSession()
@@ -42,13 +47,13 @@ namespace Doppler.Sap.Factory
                     var client = _httpClientFactory.CreateClient();
                     var sapResponse = await client.SendAsync(new HttpRequestMessage
                     {
-                        RequestUri = new Uri($"{_sapConfig.BaseServerUrl}Login/"),
+                        RequestUri = new Uri($"{_sapServiceConfig.BaseServerUrl}Login/"),
                         Content = new StringContent(JsonConvert.SerializeObject(
-                                new SapConfig
+                                new SapServiceConfig
                                 {
-                                    CompanyDB = _sapConfig.CompanyDB,
-                                    Password = _sapConfig.Password,
-                                    UserName = _sapConfig.UserName
+                                    CompanyDB = _sapServiceConfig.CompanyDB,
+                                    Password = _sapServiceConfig.Password,
+                                    UserName = _sapServiceConfig.UserName
                                 }),
                             Encoding.UTF8,
                             "application/json"),
@@ -77,13 +82,13 @@ namespace Doppler.Sap.Factory
             return _sapCookies;
         }
 
-        public async Task<SapBusinessPartner> TryGetBusinessPartner(int userId, string cuit, int userPlanTypeId)
+        public async Task<SapBusinessPartner> TryGetBusinessPartner(int userId, string cuit, int userPlanTypeId, string countryCode)
         {
-            var incompleteCardCode = BusinessPartnerMapper.MapDopplerUserIdToSapBusinessPartnerId(userId, userPlanTypeId);
+            var incompleteCardCode = _businessPartnerMapper.MapDopplerUserIdToSapBusinessPartnerId(userId, userPlanTypeId);
 
             var message = new HttpRequestMessage
             {
-                RequestUri = new Uri($"{_sapConfig.BaseServerUrl}BusinessPartners?$filter=startswith(CardCode,'{incompleteCardCode}')"),
+                RequestUri = new Uri($"{_sapServiceConfig.BaseServerUrl}{_sapServiceConfig.BusinessPartnerConfig.Endpoint}?$filter=startswith(CardCode,'{incompleteCardCode}')"),
                 Method = HttpMethod.Get
             };
 
@@ -119,7 +124,7 @@ namespace Doppler.Sap.Factory
         {
             var message = new HttpRequestMessage()
             {
-                RequestUri = new Uri($"{_sapConfig.BaseServerUrl}BusinessPartners('{cardCode}')"),
+                RequestUri = new Uri($"{_sapServiceConfig.BaseServerUrl}{_sapServiceConfig.BusinessPartnerConfig.Endpoint}('{cardCode}')"),
                 Method = HttpMethod.Get
             };
 
@@ -139,7 +144,7 @@ namespace Doppler.Sap.Factory
 
         public async Task<SapTask> CreateBusinessPartnerFromDopplerUser(SapTask task)
         {
-            var existentBusinessPartner = await TryGetBusinessPartner(task.DopplerUser.Id, task.DopplerUser.FederalTaxID, task.DopplerUser.PlanType.Value);
+            var existentBusinessPartner = await TryGetBusinessPartner(task.DopplerUser.Id, task.DopplerUser.FederalTaxID, task.DopplerUser.PlanType.Value, task.DopplerUser.BillingCountryCode);
 
             var fatherCard = task.DopplerUser.GroupCode == 115 ?
                     $"CR{task.DopplerUser.Id:0000000000000}" :
@@ -154,7 +159,7 @@ namespace Doppler.Sap.Factory
                 fatherBusinessPartner = await TryGetBusinessPartnerByCardCode(fatherCard);
             }
 
-            task.BusinessPartner = BusinessPartnerMapper.MapDopplerUserToSapBusinessPartner(task.DopplerUser, existentBusinessPartner.CardCode, fatherBusinessPartner);
+            task.BusinessPartner = _businessPartnerMapper.MapDopplerUserToSapBusinessPartner(task.DopplerUser, existentBusinessPartner.CardCode, fatherBusinessPartner);
             task.ExistentBusinessPartner = existentBusinessPartner;
 
             return task;

@@ -1,6 +1,3 @@
-using System;
-using System.Diagnostics.CodeAnalysis;
-using System.Net.Http;
 using Doppler.Sap.DopplerSecurity;
 using Doppler.Sap.Factory;
 using Doppler.Sap.Models;
@@ -12,6 +9,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using System;
+using System.Diagnostics.CodeAnalysis;
+using System.Net.Http;
 
 namespace Doppler.Sap
 {
@@ -77,17 +77,22 @@ namespace Doppler.Sap
                     UseCookies = false
                 });
             services.AddSapServices();
-            services.AddTransient<ISapTaskHandler, SapTaskHandler>();
             services.AddSingleton<IQueuingService, QueuingService>();
             services.AddTransient<ISapService, SapService>();
+
             services.Configure<SapConfig>(Configuration.GetSection(nameof(SapConfig)));
+
             services.AddTransient<SetCurrencyRateHandler>();
             services.AddTransient<BillingRequestHandler>();
             services.AddTransient<CreateOrUpdateBusinessPartnerHandler>();
             services.AddTransient<ISapTaskFactory, SapTaskFactory>();
+            services.AddTransient<ISapServiceSettingsFactory, SapServiceSettingsFactory>();
             services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
             services.AddTransient<ISlackService, SlackService>();
             services.AddTransient<ITestSapService, TestSapService>();
+
+            //Create the MapperFactory and also initializes the mappers
+            services.AddSapMappers();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

@@ -32,6 +32,8 @@ namespace Doppler.Sap
                 {
                     try
                     {
+                        _logger.LogInformation($"Task {dequeuedTask.TaskType}.");
+
                         var sapServiceResponse = await _sapService.SendToSap(dequeuedTask);
                         if (sapServiceResponse.IsSuccessful)
                         {

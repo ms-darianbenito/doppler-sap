@@ -11,6 +11,7 @@ namespace Doppler.Sap.DopplerSecurity
         public static IServiceCollection AddDopplerSecurity(this IServiceCollection services)
         {
             services.ConfigureOptions<ConfigureDopplerSecurityOptions>();
+            services.AddSingleton<IAuthorizationHandler, IsSuperUserHandler>();
 
             services
                 .AddOptions<AuthorizationOptions>()
@@ -19,6 +20,7 @@ namespace Doppler.Sap.DopplerSecurity
                     o.DefaultPolicy = new AuthorizationPolicyBuilder()
                         .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme)
                         .RequireAuthenticatedUser()
+                        .AddRequirements(new IsSuperUserRequirement())
                         .Build();
                 });
 

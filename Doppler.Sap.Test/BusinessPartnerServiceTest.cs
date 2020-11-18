@@ -1,6 +1,7 @@
 using Doppler.Sap.Enums;
 using Doppler.Sap.Models;
 using Doppler.Sap.Services;
+using Doppler.Sap.Validations.BusinessPartner;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -18,6 +19,12 @@ namespace Doppler.Sap.Test
         [Fact]
         public async Task BusinessPartnerService_ShouldBeAddTaskInQueue()
         {
+            var businessPartnerValidations = new List<IBusinessPartnerValidation>
+            {
+                new BusinessPartnerForArValidation(Mock.Of<ILogger<BusinessPartnerForArValidation>>()),
+                new BusinessPartnerForUsValidation(Mock.Of<ILogger<BusinessPartnerForUsValidation>>())
+            };
+
             var loggerMock = new Mock<ILogger<BusinessPartnerService>>();
             var queuingServiceMock = new Mock<IQueuingService>();
 
@@ -52,14 +59,13 @@ namespace Doppler.Sap.Test
                     }
                 });
 
-            var businessPartnerService = new BusinessPartnerService(queuingServiceMock.Object, loggerMock.Object, sapConfigMock.Object);
+            var businessPartnerService = new BusinessPartnerService(queuingServiceMock.Object, loggerMock.Object, sapConfigMock.Object, businessPartnerValidations);
 
             var dopplerUser = new DopplerUserDto
             {
                 Id = 1,
                 FederalTaxID = "27111111115",
                 PlanType = 1,
-                BillingCountryCode = "US",
                 BillingSystemId = 2
             };
 
@@ -69,8 +75,14 @@ namespace Doppler.Sap.Test
         }
 
         [Fact]
-        public void BusinessPartnerService_ShouldBeThrowsValidationException_WhenCountryCodeNotAROrUS()
+        public void BusinessPartnerService_ShouldBeThrowsArgumentException_WhenCountryCodeNotAROrUS()
         {
+            var businessPartnerValidations = new List<IBusinessPartnerValidation>
+            {
+                new BusinessPartnerForArValidation(Mock.Of<ILogger<BusinessPartnerForArValidation>>()),
+                new BusinessPartnerForUsValidation(Mock.Of<ILogger<BusinessPartnerForUsValidation>>())
+            };
+
             var loggerMock = new Mock<ILogger<BusinessPartnerService>>();
             var queuingServiceMock = new Mock<IQueuingService>();
 
@@ -94,7 +106,7 @@ namespace Doppler.Sap.Test
                     }
                 });
 
-            var businessPartnerService = new BusinessPartnerService(queuingServiceMock.Object, loggerMock.Object, sapConfigMock.Object);
+            var businessPartnerService = new BusinessPartnerService(queuingServiceMock.Object, loggerMock.Object, sapConfigMock.Object, businessPartnerValidations);
 
             var dopplerUser = new DopplerUserDto
             {
@@ -105,13 +117,19 @@ namespace Doppler.Sap.Test
                 BillingSystemId = 16
             };
 
-            var ex = Assert.ThrowsAsync<ValidationException>(() => businessPartnerService.CreateOrUpdateBusinessPartner(dopplerUser));
-            Assert.Equal("Invalid billing system value.", ex.Result.Message);
+            var ex = Assert.ThrowsAsync<ArgumentException>(() => businessPartnerService.CreateOrUpdateBusinessPartner(dopplerUser));
+            Assert.Equal("sapSystem (Parameter 'The sapSystem '' is not supported.')", ex.Result.Message);
         }
 
         [Fact]
         public void BusinessPartnerService_ShouldBeThrowsValidationException_WhenDopplerUserFederalTaxIDIsNotValid()
         {
+            var businessPartnerValidations = new List<IBusinessPartnerValidation>
+            {
+                new BusinessPartnerForArValidation(Mock.Of<ILogger<BusinessPartnerForArValidation>>()),
+                new BusinessPartnerForUsValidation(Mock.Of<ILogger<BusinessPartnerForUsValidation>>())
+            };
+
             var loggerMock = new Mock<ILogger<BusinessPartnerService>>();
             var queuingServiceMock = new Mock<IQueuingService>();
 
@@ -135,7 +153,7 @@ namespace Doppler.Sap.Test
                     }
                 });
 
-            var businessPartnerService = new BusinessPartnerService(queuingServiceMock.Object, loggerMock.Object, sapConfigMock.Object);
+            var businessPartnerService = new BusinessPartnerService(queuingServiceMock.Object, loggerMock.Object, sapConfigMock.Object, businessPartnerValidations);
 
             var dopplerUser = new DopplerUserDto
             {
@@ -153,6 +171,12 @@ namespace Doppler.Sap.Test
         [Fact]
         public void BusinessPartnerService_ShouldBeThrowsValidationException_WhenDopplerUserPlanTypeIsNotValid()
         {
+            var businessPartnerValidations = new List<IBusinessPartnerValidation>
+            {
+                new BusinessPartnerForArValidation(Mock.Of<ILogger<BusinessPartnerForArValidation>>()),
+                new BusinessPartnerForUsValidation(Mock.Of<ILogger<BusinessPartnerForUsValidation>>())
+            };
+
             var loggerMock = new Mock<ILogger<BusinessPartnerService>>();
             var queuingServiceMock = new Mock<IQueuingService>();
 
@@ -176,7 +200,7 @@ namespace Doppler.Sap.Test
                     }
                 });
 
-            var businessPartnerService = new BusinessPartnerService(queuingServiceMock.Object, loggerMock.Object, sapConfigMock.Object);
+            var businessPartnerService = new BusinessPartnerService(queuingServiceMock.Object, loggerMock.Object, sapConfigMock.Object, businessPartnerValidations);
 
             var dopplerUser = new DopplerUserDto
             {
@@ -191,8 +215,14 @@ namespace Doppler.Sap.Test
         }
 
         [Fact]
-        public void BusinessPartnerService_ShouldBeThrowsValidationException_WhenWhenDopplerUserBillingCountryCodeIsNotValid()
+        public void BusinessPartnerService_ShouldBeThrowsValidationException_WhenSapSystemIsEmpty()
         {
+            var businessPartnerValidations = new List<IBusinessPartnerValidation>
+            {
+                new BusinessPartnerForArValidation(Mock.Of<ILogger<BusinessPartnerForArValidation>>()),
+                new BusinessPartnerForUsValidation(Mock.Of<ILogger<BusinessPartnerForUsValidation>>())
+            };
+
             var loggerMock = new Mock<ILogger<BusinessPartnerService>>();
             var queuingServiceMock = new Mock<IQueuingService>();
 
@@ -216,19 +246,19 @@ namespace Doppler.Sap.Test
                     }
                 });
 
-            var businessPartnerService = new BusinessPartnerService(queuingServiceMock.Object, loggerMock.Object, sapConfigMock.Object);
+            var businessPartnerService = new BusinessPartnerService(queuingServiceMock.Object, loggerMock.Object, sapConfigMock.Object, businessPartnerValidations);
 
             var dopplerUser = new DopplerUserDto
             {
                 Id = 1,
                 FederalTaxID = "27111111115",
                 PlanType = 1,
-                BillingCountryCode = "MX",
+                BillingCountryCode = "A",
                 BillingSystemId = 16
             };
 
-            var ex = Assert.ThrowsAsync<ValidationException>(() => businessPartnerService.CreateOrUpdateBusinessPartner(dopplerUser));
-            Assert.Equal("Invalid billing system value.", ex.Result.Message);
+            var ex = Assert.ThrowsAsync<ArgumentException>(() => businessPartnerService.CreateOrUpdateBusinessPartner(dopplerUser));
+            Assert.Equal("sapSystem (Parameter 'The sapSystem '' is not supported.')", ex.Result.Message);
         }
     }
 }

@@ -7,6 +7,7 @@ namespace Doppler.Sap.Models
 {
     public class SapDocumentLineModel
     {
+        public string TaxCode { get; set; }
         public string ItemCode { get; set; }
         public double Quantity { get; set; } = 1.0;
         public double UnitPrice { get; set; }

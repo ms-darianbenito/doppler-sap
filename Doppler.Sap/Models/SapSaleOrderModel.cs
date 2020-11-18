@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 
 namespace Doppler.Sap.Models
 {
@@ -16,5 +15,11 @@ namespace Doppler.Sap.Models
         public string FiscalID { get; set; }
         public int UserId { get; set; }
         public int PlanType { get; set; }
+        public int BillingSystemId { get; set; } = 9;
+        public string U_DPL_CARD_HOLDER { get; set; }
+        public string U_DPL_CARD_NUMBER { get; set; }
+        public string U_DPL_CARD_TYPE { get; set; }
+        public string U_DPL_CARD_ERROR_COD { get; set; }
+        public string U_DPL_CARD_ERROR_DET { get; set; }
     }
 }

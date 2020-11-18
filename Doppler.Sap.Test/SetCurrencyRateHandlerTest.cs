@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Threading;
@@ -20,10 +21,20 @@ namespace Doppler.Sap.Test
             sapConfigMock.Setup(x => x.Value)
                 .Returns(new SapConfig
                 {
-                    BaseServerUrl = "http://123.123.123",
-                    CompanyDB = "CompanyDb",
-                    Password = "password",
-                    UserName = "Name"
+                    SapServiceConfigsByCountryCode = new Dictionary<string, SapServiceConfig>
+                    {
+                        { "AR", new SapServiceConfig {
+                            CompanyDB = "CompanyDb",
+                            Password = "password",
+                            UserName = "Name",
+                            BaseServerUrl = "http://123.123.123/",
+                            BusinessPartnerConfig = new BusinessPartnerConfig
+                            {
+                                Endpoint = "BusinessPartners"
+                            }
+                        }
+                        }
+                    }
                 });
 
             var httpClientFactoryMock = new Mock<IHttpClientFactory>();
@@ -48,9 +59,12 @@ namespace Doppler.Sap.Test
                     RouteId = "route"
                 });
 
+            var sapServiceSettingsFactoryMock = new Mock<ISapServiceSettingsFactory>();
+            sapServiceSettingsFactoryMock.Setup(x => x.CreateHandler("AR")).Returns(sapTaskHandlerMock.Object);
+
             var handler = new SetCurrencyRateHandler(
                 sapConfigMock.Object,
-                sapTaskHandlerMock.Object,
+                sapServiceSettingsFactoryMock.Object,
                 httpClientFactoryMock.Object);
 
             var httpResponseMessage = new HttpResponseMessage

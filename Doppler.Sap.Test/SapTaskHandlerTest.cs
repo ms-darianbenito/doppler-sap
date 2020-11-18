@@ -38,21 +38,13 @@ namespace Doppler.Sap.Test
             dateTimeProviderMock.Setup(x => x.UtcNow)
                 .Returns(new DateTime(2019, 09, 25));
 
-            var sapConfigMock = new Mock<IOptions<SapConfig>>();
-            sapConfigMock.Setup(x => x.Value)
-                .Returns(new SapConfig
-                {
-                    BaseServerUrl = "http://123.123.123",
-                    CompanyDB = "CompanyDb",
-                    Password = "password",
-                    UserName = "Name"
-                });
-
             var sapTaskHandler = new SapTaskHandler(
-                sapConfigMock.Object,
+                new SapConfig { },
                 Mock.Of<ILogger<SapTaskHandler>>(),
                 httpClientFactoryMock.Object,
-                dateTimeProviderMock.Object);
+                dateTimeProviderMock.Object,
+                new SapServiceConfig { CompanyDB = "CompanyDb", Password = "password", UserName = "Name", BaseServerUrl = "http://123.123.123" },
+                null);
 
             var cookiesFirst = await sapTaskHandler.StartSession();
             var cookiesSecond = await sapTaskHandler.StartSession();
@@ -88,17 +80,16 @@ namespace Doppler.Sap.Test
             sapConfigMock.Setup(x => x.Value)
                 .Returns(new SapConfig
                 {
-                    BaseServerUrl = "http://123.123.123",
-                    CompanyDB = "CompanyDb",
-                    Password = "password",
-                    UserName = "Name"
+                    //BaseServerUrl = "http://123.123.123"
                 });
 
             var sapTaskHandler = new SapTaskHandler(
-                sapConfigMock.Object,
+                new SapConfig(),
                 Mock.Of<ILogger<SapTaskHandler>>(),
                 httpClientFactoryMock.Object,
-                dateTimeProviderMock.Object);
+                dateTimeProviderMock.Object,
+                new SapServiceConfig { CompanyDB = "CompanyDb", Password = "password", UserName = "Name", BaseServerUrl = "http://123.123.123" },
+                null);
 
             var cookiesFirst = await sapTaskHandler.StartSession();
 

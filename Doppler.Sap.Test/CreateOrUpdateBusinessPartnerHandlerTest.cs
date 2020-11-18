@@ -19,16 +19,92 @@ namespace Doppler.Sap.Test
     public class CreateOrUpdateBusinessPartnerHandlerTest
     {
         [Fact]
+
+        public void CreateOrUpdateBusinessPartnerHandler_ShouldBeThownsAnExcpetion_WhenCountryCodeNotAROrUS()
+        {
+            var countryCode = "MX";
+
+            var sapConfigMock = new Mock<IOptions<SapConfig>>();
+            sapConfigMock.Setup(x => x.Value)
+                .Returns(new SapConfig
+                {
+                    SapServiceConfigsByCountryCode = new Dictionary<string, SapServiceConfig>
+                    {
+                        { "AR", new SapServiceConfig {
+                            CompanyDB = "CompanyDb",
+                            Password = "password",
+                            UserName = "Name",
+                            BaseServerUrl = "http://123.123.123/",
+                            BusinessPartnerConfig = new BusinessPartnerConfig
+                            {
+                                Endpoint = "BusinessPartners"
+                            }
+                        }
+                        },
+                        { "US", new SapServiceConfig {
+                            CompanyDB = "CompanyDb",
+                            Password = "password",
+                            UserName = "Name",
+                            BaseServerUrl = "http://123.123.123/",
+                            BusinessPartnerConfig = new BusinessPartnerConfig
+                            {
+                                Endpoint = "BusinessPartners"
+                            }
+                        }
+                        }
+                    }
+                });
+
+            var httpClientFactoryMock = new Mock<IHttpClientFactory>();
+
+
+            var sapTask = new SapTask
+            {
+                DopplerUser = new DopplerUserDto
+                {
+                    Id = 1,
+                    FederalTaxID = "27111111115",
+                    PlanType = 1,
+                    BillingCountryCode = countryCode
+                },
+                TaskType = SapTaskEnum.CreateOrUpdateBusinessPartner
+            };
+
+            var sapTaskHandlerMock = new Mock<ISapTaskHandler>();
+            var sapServiceSettingsFactoryMock = new Mock<ISapServiceSettingsFactory>();
+
+            sapServiceSettingsFactoryMock.Setup(x => x.CreateHandler(countryCode)).Throws(new ArgumentException($"The countryCode '{countryCode}' is not supported."));
+
+            var handler = new CreateOrUpdateBusinessPartnerHandler(
+                sapConfigMock.Object,
+                httpClientFactoryMock.Object,
+                sapServiceSettingsFactoryMock.Object);
+
+            var ex = Assert.ThrowsAsync<ArgumentException>(() => handler.Handle(sapTask));
+            Assert.Equal($"The countryCode '{countryCode}' is not supported.", ex.Result.Message);
+        }
+
+        [Fact]
         public async Task CreateOrUpdateBusinessPartnerHandler_ShouldBeSentNewBPToSap_WhenBPNotExist()
         {
             var sapConfigMock = new Mock<IOptions<SapConfig>>();
             sapConfigMock.Setup(x => x.Value)
                 .Returns(new SapConfig
                 {
-                    BaseServerUrl = "http://123.123.123/",
-                    CompanyDB = "CompanyDb",
-                    Password = "password",
-                    UserName = "Name"
+                    SapServiceConfigsByCountryCode = new Dictionary<string, SapServiceConfig>
+                    {
+                        { "AR", new SapServiceConfig {
+                            CompanyDB = "CompanyDb",
+                            Password = "password",
+                            UserName = "Name",
+                            BaseServerUrl = "http://123.123.123/",
+                            BusinessPartnerConfig = new BusinessPartnerConfig
+                            {
+                                Endpoint = "BusinessPartners"
+                            }
+                        }
+                        }
+                    }
                 });
 
             var httpClientFactoryMock = new Mock<IHttpClientFactory>();
@@ -51,7 +127,8 @@ namespace Doppler.Sap.Test
                 {
                     Id = 1,
                     FederalTaxID = "27111111115",
-                    PlanType = 1
+                    PlanType = 1,
+                    BillingCountryCode = "AR"
                 },
                 TaskType = SapTaskEnum.CreateOrUpdateBusinessPartner
             };
@@ -60,6 +137,11 @@ namespace Doppler.Sap.Test
             sapTaskHandlerMock.Setup(x => x.CreateBusinessPartnerFromDopplerUser(sapTask))
                 .ReturnsAsync(new SapTask
                 {
+                    BusinessPartner = new SapBusinessPartner
+                    {
+                        BPAddresses = new List<Address>() { new Address { Country = "AR" } },
+                        ContactEmployees = new List<SapContactEmployee>() { },
+                    },
                     ExistentBusinessPartner = new SapBusinessPartner { CardCode = "2323423" }
                 });
             sapTaskHandlerMock.Setup(x => x.StartSession())
@@ -69,10 +151,13 @@ namespace Doppler.Sap.Test
                     RouteId = "route"
                 });
 
+            var sapServiceSettingsFactoryMock = new Mock<ISapServiceSettingsFactory>();
+            sapServiceSettingsFactoryMock.Setup(x => x.CreateHandler("AR")).Returns(sapTaskHandlerMock.Object);
+
             var handler = new CreateOrUpdateBusinessPartnerHandler(
                 sapConfigMock.Object,
-                sapTaskHandlerMock.Object,
-                httpClientFactoryMock.Object);
+                httpClientFactoryMock.Object,
+                sapServiceSettingsFactoryMock.Object);
 
             var httpResponseMessage = new HttpResponseMessage
             {
@@ -97,10 +182,20 @@ namespace Doppler.Sap.Test
             sapConfigMock.Setup(x => x.Value)
                 .Returns(new SapConfig
                 {
-                    BaseServerUrl = "http://123.123.123/",
-                    CompanyDB = "CompanyDb",
-                    Password = "password",
-                    UserName = "Name"
+                    SapServiceConfigsByCountryCode = new Dictionary<string, SapServiceConfig>
+                    {
+                        { "AR", new SapServiceConfig {
+                            CompanyDB = "CompanyDb",
+                            Password = "password",
+                            UserName = "Name",
+                            BaseServerUrl = "http://123.123.123/",
+                            BusinessPartnerConfig = new BusinessPartnerConfig
+                            {
+                                Endpoint = "BusinessPartners"
+                            }
+                        }
+                        }
+                    }
                 });
 
             var httpClientFactoryMock = new Mock<IHttpClientFactory>();
@@ -123,7 +218,8 @@ namespace Doppler.Sap.Test
                 {
                     Id = 1,
                     FederalTaxID = "27111111115",
-                    PlanType = 1
+                    PlanType = 1,
+                    BillingCountryCode = "AR"
                 },
                 TaskType = SapTaskEnum.CreateOrUpdateBusinessPartner
             };
@@ -134,8 +230,8 @@ namespace Doppler.Sap.Test
                 {
                     BusinessPartner = new SapBusinessPartner
                     {
-                        BPAddresses = new List<Address>() { },
-                        ContactEmployees = new List<SapContactEmployee>() { }
+                        BPAddresses = new List<Address>() { new Address { Country = "AR" } },
+                        ContactEmployees = new List<SapContactEmployee>() { },
                     },
                     ExistentBusinessPartner = new SapBusinessPartner
                     {
@@ -151,10 +247,13 @@ namespace Doppler.Sap.Test
                     RouteId = "route"
                 });
 
+            var sapServiceSettingsFactoryMock = new Mock<ISapServiceSettingsFactory>();
+            sapServiceSettingsFactoryMock.Setup(x => x.CreateHandler("AR")).Returns(sapTaskHandlerMock.Object);
+
             var handler = new CreateOrUpdateBusinessPartnerHandler(
                 sapConfigMock.Object,
-                sapTaskHandlerMock.Object,
-                httpClientFactoryMock.Object);
+                httpClientFactoryMock.Object,
+                sapServiceSettingsFactoryMock.Object);
 
             var httpResponseMessage = new HttpResponseMessage
             {

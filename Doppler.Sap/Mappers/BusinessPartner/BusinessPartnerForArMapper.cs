@@ -1,17 +1,51 @@
 using Doppler.Sap.Enums;
 using Doppler.Sap.Models;
-using Doppler.Sap.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Mail;
 using System.Threading.Tasks;
 
-namespace Doppler.Sap.Mappers
+namespace Doppler.Sap.Mappers.BusinessPartner
 {
-    public class BusinessPartnerMapper
+    public class BusinessPartnerForArMapper : IBusinessPartnerMapper
     {
-        public static string MapDopplerUserIdToSapBusinessPartnerId(int id, int planType)
+        private const string countryCodeSupported = "AR";
+        private readonly Dictionary<int, string> states = new Dictionary<int, string>
+        {
+            {2189,"01"}, // Buenos Aires
+            {2190,"02"}, // Catamarca
+            {2191,"16"}, // Chaco
+            {2192,"17"}, // Chubut
+            {2193,"00"}, // Ciudad Autónoma de Buenos Aires
+            {2194,"04"}, // Corrientes
+            {2195,"03"}, // Córdoba
+            {2196,"05"}, // Entre Ríos
+            {2197,"18"}, // Formosa
+            {2198,"06"}, // Jujuy
+            {2199,"21"}, // La Pampa
+            {2200,"08"}, // La Rioja
+            {2201,"07"}, // Mendoza
+            {2202,"19"}, // Misiones
+            {2203,"20"}, // Neuquén
+            {2204,"22"}, // Río Negro
+            {2205,"09"}, // Salta
+            {2206,"10"}, // San Juan
+            {2207,"11"}, // San Luis
+            {2208,"12"}, // Santa Cruz
+            {2209,"13"}, // Santa Fe
+            {2210,"14"}, // Santiago del Estero
+            {2211,"24"}, // Tierra del Fuego
+            {2212,"15"}, // Tucumán
+        };
+
+
+        public bool CanMapCountry(string countryCode)
+        {
+            return countryCodeSupported == countryCode;
+        }
+
+        public string MapDopplerUserIdToSapBusinessPartnerId(int id, int planType)
         {
             var planTypeCode = Dictionary.UserPlanTypesDictionary.TryGetValue(planType, out var code) ? code
                 : throw new ArgumentException("Parameter does not match with any plan type.", $"userPlanTypeId");
@@ -19,7 +53,7 @@ namespace Doppler.Sap.Mappers
             return $"{planTypeCode}{id:00000000000}.";
         }
 
-        public static SapBusinessPartner MapDopplerUserToSapBusinessPartner(DopplerUserDto dopplerUser, string cardCode, SapBusinessPartner fatherBusinessPartner)
+        public SapBusinessPartner MapDopplerUserToSapBusinessPartner(DopplerUserDto dopplerUser, string cardCode, SapBusinessPartner fatherBusinessPartner)
         {
             var newBusinessPartner = new SapBusinessPartner
             {
@@ -34,16 +68,15 @@ namespace Doppler.Sap.Mappers
                 Phone1 = dopplerUser.PhoneNumber ?? "",
                 FederalTaxID = dopplerUser.FederalTaxID.Replace("-", ""),
                 U_B1SYS_VATCtg = dopplerUser.IdConsumerType.HasValue ?
-                    (Dictionary.ConsumerTypesDictionary.TryGetValue(dopplerUser.IdConsumerType, out string consumerType) ? consumerType : "CF")
-                    : "CF",
+                            (Dictionary.ConsumerTypesDictionary.TryGetValue(dopplerUser.IdConsumerType, out string consumerType) ? consumerType : "CF")
+                            : "CF",
                 Currency = fatherBusinessPartner?.Currency ?? "##",
                 AliasName = dopplerUser.Email.ToLower(),
-                U_B1SYS_FiscIdType = dopplerUser.FederalTaxType == "DNI" ? "96"
-                    : (dopplerUser.FederalTaxType == "CUIT" ? "80" : "99"),
+                U_B1SYS_FiscIdType = dopplerUser.FederalTaxType == "DNI" ? "96" : (dopplerUser.FederalTaxType == "CUIT" ? "80" : "99"),
                 CardType = "C",
                 U_DPL_CANCELED = dopplerUser.Cancelated ? "Y" : "N",
                 U_DPL_SUSPENDED = dopplerUser.Blocked ? "Y" : "N",
-                SalesPersonCode = dopplerUser.IsInbound.HasValue ? (dopplerUser.IsInbound.GetValueOrDefault() ? 1 : 2) : 3,
+                SalesPersonCode = (dopplerUser.IsInbound.HasValue ? (dopplerUser.IsInbound.GetValueOrDefault() ? 1 : 2) : 3),
                 Indicator = "FC",
                 DunningTerm = "ReclamoVto",
                 FatherCard = fatherBusinessPartner?.CardCode,
@@ -89,8 +122,7 @@ namespace Doppler.Sap.Mappers
                             City = dopplerUser.BillingCity != null ? dopplerUser.BillingCity.ToUpper() : "",
                             Country = dopplerUser.BillingCountryCode != null ? dopplerUser.BillingCountryCode.ToUpper() : "",
                             State = dopplerUser.GroupCode == 115 ? dopplerUser.BillingStateId.ToString() :
-                                (dopplerUser.BillingCountryCode == "AR" ? (dopplerUser.BillingStateId.HasValue ?
-                                (Dictionary.StatesDictionary.TryGetValue((int)dopplerUser.BillingStateId, out int sapBillStateId) ? sapBillStateId : 99) : 99).ToString("00") : null),
+                                    (dopplerUser.BillingStateId.HasValue ? (states.TryGetValue(dopplerUser.BillingStateId.Value, out var sapBillStateId) ? sapBillStateId : "99") : "99"),
                             AddressType = "bo_BillTo",
                                 BPCode =  cardCode,
                             RowNum = 0
@@ -103,13 +135,12 @@ namespace Doppler.Sap.Mappers
                             City = dopplerUser.BillingCity != null ? dopplerUser.BillingCity.ToUpper() : "",
                             Country = dopplerUser.BillingCountryCode != null ? dopplerUser.BillingCountryCode.ToUpper() : "",
                             State = dopplerUser.GroupCode == 115 ? dopplerUser.BillingStateId.ToString() :
-                                (dopplerUser.BillingCountryCode == "AR" ? (dopplerUser.BillingStateId.HasValue ?
-                                (Dictionary.StatesDictionary.TryGetValue((int)dopplerUser.BillingStateId, out int sapShipStateId) ? sapShipStateId : 99) : 99).ToString("00") : null),
+                                    (dopplerUser.BillingStateId.HasValue ? (states.TryGetValue(dopplerUser.BillingStateId.Value, out var sapShipStateId) ? sapShipStateId : "99") : "99"),
                             AddressType = "bo_ShipTo",
                                 BPCode =  cardCode,
                             RowNum = 1
                         }
-                }
+                    }
             };
 
             if (dopplerUser.SAPProperties != null)
@@ -129,6 +160,7 @@ namespace Doppler.Sap.Mappers
                 newBusinessPartner.Properties13 = dopplerUser.SAPProperties.Reports ? "tYES" : "tNO";
                 newBusinessPartner.Properties14 = dopplerUser.SAPProperties.SMS ? "tYES" : "tNO";
             }
+
             return newBusinessPartner;
         }
     }

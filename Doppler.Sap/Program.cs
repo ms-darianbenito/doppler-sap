@@ -19,6 +19,7 @@ namespace Doppler.Sap
                     loggerConfiguration.ReadFrom.Configuration(hostContext.Configuration))
                 .ConfigureAppConfiguration(configHost =>
                 {
+                    configHost.AddJsonFile("appsettings.swarm.json", true);
                     configHost.AddJsonFile("appsettings.Secret.json", true);
                     configHost.AddJsonFile("C:\\ProgramData\\Docker\\secrets\\appsettings.Secret.json", true);
                     configHost.AddJsonFile("/run/secrets/appsettings.Secret.json", true);

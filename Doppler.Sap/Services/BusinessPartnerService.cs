@@ -1,5 +1,6 @@
 using Doppler.Sap.Enums;
 using Doppler.Sap.Models;
+using Doppler.Sap.Utils;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
@@ -48,12 +49,14 @@ namespace Doppler.Sap.Services
 
         private string VerifyUserInformation(DopplerUserDto dopplerUser)
         {
-            if (!_sapConfig.SapServiceConfigsByCountryCode.ContainsKey(dopplerUser.BillingCountryCode))
+            var sapSystem = SapSystemHelper.GetSapSystemByBillingSystem(dopplerUser.BillingSystemId);
+
+            if (!_sapConfig.SapServiceConfigsBySystem.ContainsKey(sapSystem))
             {
-                _logger.LogInformation($"{dopplerUser.Email} won't be sent to SAP because it's not from {string.Join(", ", _sapConfig.SapServiceConfigsByCountryCode.Select(x => x.Key))}");
-                return "Invalid billing country value.";
+                _logger.LogInformation($"{dopplerUser.Email} won't be sent to SAP because it's not from {string.Join(", ", _sapConfig.SapServiceConfigsBySystem.Select(x => x.Key))}");
+                return "Invalid billing system value.";
             }
-            if (String.IsNullOrEmpty(dopplerUser.FederalTaxID))
+            if (string.IsNullOrEmpty(dopplerUser.FederalTaxID))
             {
                 _logger.LogInformation($"{dopplerUser.Email} won't be sent to SAP because it doesn't have a cuit value");
                 return "Invalid cuit value.";

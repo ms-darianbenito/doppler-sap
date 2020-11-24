@@ -15,7 +15,7 @@ namespace Doppler.Sap.Factory
         private readonly ISapServiceSettingsFactory _sapServiceSettingsFactory;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly SapConfig _sapConfig;
-        private const string _countryCodeForAR = "AR";
+        private const string _sapSystem = "AR";
 
         public SetCurrencyRateHandler(
             IOptions<SapConfig> sapConfig,
@@ -29,8 +29,8 @@ namespace Doppler.Sap.Factory
 
         public async Task<SapTaskResult> Handle(SapTask dequeuedTask)
         {
-            var sapTaskHandler = _sapServiceSettingsFactory.CreateHandler(_countryCodeForAR);
-            var sapServiceSettings = SapServiceSettings.GetSettings(_sapConfig, _countryCodeForAR);
+            var sapTaskHandler = _sapServiceSettingsFactory.CreateHandler(_sapSystem);
+            var sapServiceSettings = SapServiceSettings.GetSettings(_sapConfig, _sapSystem);
             var message = new HttpRequestMessage
             {
                 RequestUri = new Uri($"{sapServiceSettings.BaseServerUrl}SBOBobService_SetCurrencyRate"),

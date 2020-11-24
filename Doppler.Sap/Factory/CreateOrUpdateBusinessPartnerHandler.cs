@@ -29,18 +29,19 @@ namespace Doppler.Sap.Factory
 
         public async Task<SapTaskResult> Handle(SapTask dequeuedTask)
         {
-            var sapTaskHandler = _sapServiceSettingsFactory.CreateHandler(dequeuedTask.DopplerUser.BillingCountryCode);
+            var sapSystem = SapSystemHelper.GetSapSystemByBillingSystem(dequeuedTask.DopplerUser.BillingSystemId);
+
+            var sapTaskHandler = _sapServiceSettingsFactory.CreateHandler(sapSystem);
             dequeuedTask = await sapTaskHandler.CreateBusinessPartnerFromDopplerUser(dequeuedTask);
 
             return string.IsNullOrEmpty(dequeuedTask.ExistentBusinessPartner.FederalTaxID) ?
-                await CreateBusinessPartner(dequeuedTask) :
-                await UpdateBusinessPartner(dequeuedTask);
+                await CreateBusinessPartner(dequeuedTask, sapSystem) :
+                await UpdateBusinessPartner(dequeuedTask, sapSystem);
         }
 
-        private async Task<SapTaskResult> CreateBusinessPartner(SapTask dequeuedTask)
+        private async Task<SapTaskResult> CreateBusinessPartner(SapTask dequeuedTask, string sapSystem)
         {
-            var countryCode = dequeuedTask.BusinessPartner.BPAddresses.FirstOrDefault()?.Country ?? string.Empty;
-            var serviceSetting = SapServiceSettings.GetSettings(_sapConfig, countryCode);
+            var serviceSetting = SapServiceSettings.GetSettings(_sapConfig, sapSystem);
             var uriString = $"{serviceSetting.BaseServerUrl}{serviceSetting.BusinessPartnerConfig.Endpoint}/";
             var sapResponse = await SendMessage(dequeuedTask.BusinessPartner, uriString, HttpMethod.Post);
 
@@ -54,10 +55,9 @@ namespace Doppler.Sap.Factory
             return taskResult;
         }
 
-        private async Task<SapTaskResult> UpdateBusinessPartner(SapTask dequeuedTask)
+        private async Task<SapTaskResult> UpdateBusinessPartner(SapTask dequeuedTask, string sapSystem)
         {
-            var countryCode = dequeuedTask.BusinessPartner.BPAddresses.FirstOrDefault() != null ? dequeuedTask.BusinessPartner.BPAddresses.FirstOrDefault()?.Country : string.Empty;
-            var serviceSetting = SapServiceSettings.GetSettings(_sapConfig, countryCode);
+            var serviceSetting = SapServiceSettings.GetSettings(_sapConfig, sapSystem);
 
             //SAP uses a non conventional patch where you have to send only the fields that you want to be changed with the new values
             dequeuedTask.BusinessPartner.BPAddresses = GetBPAddressesPatchObject(dequeuedTask.BusinessPartner.BPAddresses);

@@ -8,6 +8,6 @@ namespace Doppler.Sap.Models
         public int MaxAmountAllowedAccounts { get; set; }
         public int SessionTimeoutPadding { get; set; }
         public bool UseDummyData { get; set; }
-        public Dictionary<string, SapServiceConfig> SapServiceConfigsByCountryCode { get; set; }
+        public Dictionary<string, SapServiceConfig> SapServiceConfigsBySystem { get; set; }
     }
 }

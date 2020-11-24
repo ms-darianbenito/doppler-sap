@@ -25,7 +25,7 @@ namespace Doppler.Sap.Test
             sapConfigMock.Setup(x => x.Value)
                 .Returns(new SapConfig
                 {
-                    SapServiceConfigsByCountryCode = new Dictionary<string, SapServiceConfig>
+                    SapServiceConfigsBySystem = new Dictionary<string, SapServiceConfig>
                     {
                         { "AR", new SapServiceConfig {
                             CompanyDB = "CompanyDb",
@@ -59,7 +59,8 @@ namespace Doppler.Sap.Test
                 Id = 1,
                 FederalTaxID = "27111111115",
                 PlanType = 1,
-                BillingCountryCode = "US"
+                BillingCountryCode = "US",
+                BillingSystemId = 2
             };
 
             await businessPartnerService.CreateOrUpdateBusinessPartner(dopplerUser);
@@ -77,7 +78,7 @@ namespace Doppler.Sap.Test
             sapConfigMock.Setup(x => x.Value)
                 .Returns(new SapConfig
                 {
-                    SapServiceConfigsByCountryCode = new Dictionary<string, SapServiceConfig>
+                    SapServiceConfigsBySystem = new Dictionary<string, SapServiceConfig>
                     {
                         { "AR", new SapServiceConfig {
                             CompanyDB = "CompanyDb",
@@ -100,11 +101,12 @@ namespace Doppler.Sap.Test
                 Id = 1,
                 FederalTaxID = "27111111115",
                 PlanType = 1,
-                BillingCountryCode = "MX"
+                BillingCountryCode = "MX",
+                BillingSystemId = 16
             };
 
             var ex = Assert.ThrowsAsync<ValidationException>(() => businessPartnerService.CreateOrUpdateBusinessPartner(dopplerUser));
-            Assert.Equal("Invalid billing country value.", ex.Result.Message);
+            Assert.Equal("Invalid billing system value.", ex.Result.Message);
         }
 
         [Fact]
@@ -117,7 +119,7 @@ namespace Doppler.Sap.Test
             sapConfigMock.Setup(x => x.Value)
                 .Returns(new SapConfig
                 {
-                    SapServiceConfigsByCountryCode = new Dictionary<string, SapServiceConfig>
+                    SapServiceConfigsBySystem = new Dictionary<string, SapServiceConfig>
                     {
                         { "AR", new SapServiceConfig {
                             CompanyDB = "CompanyDb",
@@ -140,7 +142,8 @@ namespace Doppler.Sap.Test
                 Id = 1,
                 FederalTaxID = "",
                 PlanType = 1,
-                BillingCountryCode = "AR"
+                BillingCountryCode = "AR",
+                BillingSystemId = 9
             };
 
             var ex = Assert.ThrowsAsync<ValidationException>(() => businessPartnerService.CreateOrUpdateBusinessPartner(dopplerUser));
@@ -157,7 +160,7 @@ namespace Doppler.Sap.Test
             sapConfigMock.Setup(x => x.Value)
                 .Returns(new SapConfig
                 {
-                    SapServiceConfigsByCountryCode = new Dictionary<string, SapServiceConfig>
+                    SapServiceConfigsBySystem = new Dictionary<string, SapServiceConfig>
                     {
                         { "AR", new SapServiceConfig {
                             CompanyDB = "CompanyDb",
@@ -179,7 +182,8 @@ namespace Doppler.Sap.Test
             {
                 Id = 1,
                 FederalTaxID = "27111111115",
-                BillingCountryCode = "AR"
+                BillingCountryCode = "AR",
+                BillingSystemId = 9
             };
 
             var ex = Assert.ThrowsAsync<ValidationException>(() => businessPartnerService.CreateOrUpdateBusinessPartner(dopplerUser));
@@ -196,7 +200,7 @@ namespace Doppler.Sap.Test
             sapConfigMock.Setup(x => x.Value)
                 .Returns(new SapConfig
                 {
-                    SapServiceConfigsByCountryCode = new Dictionary<string, SapServiceConfig>
+                    SapServiceConfigsBySystem = new Dictionary<string, SapServiceConfig>
                     {
                         { "AR", new SapServiceConfig {
                             CompanyDB = "CompanyDb",
@@ -219,11 +223,12 @@ namespace Doppler.Sap.Test
                 Id = 1,
                 FederalTaxID = "27111111115",
                 PlanType = 1,
-                BillingCountryCode = "MX"
+                BillingCountryCode = "MX",
+                BillingSystemId = 16
             };
 
             var ex = Assert.ThrowsAsync<ValidationException>(() => businessPartnerService.CreateOrUpdateBusinessPartner(dopplerUser));
-            Assert.Equal("Invalid billing country value.", ex.Result.Message);
+            Assert.Equal("Invalid billing system value.", ex.Result.Message);
         }
     }
 }

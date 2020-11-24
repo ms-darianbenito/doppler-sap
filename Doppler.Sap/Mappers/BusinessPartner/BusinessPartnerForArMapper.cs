@@ -11,34 +11,6 @@ namespace Doppler.Sap.Mappers.BusinessPartner
     public class BusinessPartnerForArMapper : IBusinessPartnerMapper
     {
         private const string countryCodeSupported = "AR";
-        private readonly Dictionary<int, string> states = new Dictionary<int, string>
-        {
-            {2189,"01"}, // Buenos Aires
-            {2190,"02"}, // Catamarca
-            {2191,"16"}, // Chaco
-            {2192,"17"}, // Chubut
-            {2193,"00"}, // Ciudad Autónoma de Buenos Aires
-            {2194,"04"}, // Corrientes
-            {2195,"03"}, // Córdoba
-            {2196,"05"}, // Entre Ríos
-            {2197,"18"}, // Formosa
-            {2198,"06"}, // Jujuy
-            {2199,"21"}, // La Pampa
-            {2200,"08"}, // La Rioja
-            {2201,"07"}, // Mendoza
-            {2202,"19"}, // Misiones
-            {2203,"20"}, // Neuquén
-            {2204,"22"}, // Río Negro
-            {2205,"09"}, // Salta
-            {2206,"10"}, // San Juan
-            {2207,"11"}, // San Luis
-            {2208,"12"}, // Santa Cruz
-            {2209,"13"}, // Santa Fe
-            {2210,"14"}, // Santiago del Estero
-            {2211,"24"}, // Tierra del Fuego
-            {2212,"15"}, // Tucumán
-        };
-
 
         public bool CanMapCountry(string countryCode)
         {
@@ -121,8 +93,7 @@ namespace Doppler.Sap.Mappers.BusinessPartner
                             ZipCode = dopplerUser.BillingZip != null ? dopplerUser.BillingZip.ToUpper() : "",
                             City = dopplerUser.BillingCity != null ? dopplerUser.BillingCity.ToUpper() : "",
                             Country = dopplerUser.BillingCountryCode != null ? dopplerUser.BillingCountryCode.ToUpper() : "",
-                            State = dopplerUser.GroupCode == 115 ? dopplerUser.BillingStateId.ToString() :
-                                    (dopplerUser.BillingStateId.HasValue ? (states.TryGetValue(dopplerUser.BillingStateId.Value, out var sapBillStateId) ? sapBillStateId : "99") : "99"),
+                            State = !string.IsNullOrEmpty(dopplerUser.BillingStateId) ? dopplerUser.BillingStateId : "99",
                             AddressType = "bo_BillTo",
                                 BPCode =  cardCode,
                             RowNum = 0
@@ -134,8 +105,7 @@ namespace Doppler.Sap.Mappers.BusinessPartner
                             ZipCode = dopplerUser.BillingZip != null ? dopplerUser.BillingZip.ToUpper() : "",
                             City = dopplerUser.BillingCity != null ? dopplerUser.BillingCity.ToUpper() : "",
                             Country = dopplerUser.BillingCountryCode != null ? dopplerUser.BillingCountryCode.ToUpper() : "",
-                            State = dopplerUser.GroupCode == 115 ? dopplerUser.BillingStateId.ToString() :
-                                    (dopplerUser.BillingStateId.HasValue ? (states.TryGetValue(dopplerUser.BillingStateId.Value, out var sapShipStateId) ? sapShipStateId : "99") : "99"),
+                            State = !string.IsNullOrEmpty(dopplerUser.BillingStateId) ? dopplerUser.BillingStateId : "99",
                             AddressType = "bo_ShipTo",
                                 BPCode =  cardCode,
                             RowNum = 1

@@ -82,7 +82,7 @@ namespace Doppler.Sap.Factory
             return _sapCookies;
         }
 
-        public async Task<SapBusinessPartner> TryGetBusinessPartner(int userId, string cuit, int userPlanTypeId, string countryCode)
+        public async Task<SapBusinessPartner> TryGetBusinessPartner(int userId, string cuit, int userPlanTypeId)
         {
             var incompleteCardCode = _businessPartnerMapper.MapDopplerUserIdToSapBusinessPartnerId(userId, userPlanTypeId);
 
@@ -144,7 +144,7 @@ namespace Doppler.Sap.Factory
 
         public async Task<SapTask> CreateBusinessPartnerFromDopplerUser(SapTask task)
         {
-            var existentBusinessPartner = await TryGetBusinessPartner(task.DopplerUser.Id, task.DopplerUser.FederalTaxID, task.DopplerUser.PlanType.Value, task.DopplerUser.BillingCountryCode);
+            var existentBusinessPartner = await TryGetBusinessPartner(task.DopplerUser.Id, task.DopplerUser.FederalTaxID, task.DopplerUser.PlanType.Value);
 
             var fatherCard = task.DopplerUser.GroupCode == 115 ?
                     $"CR{task.DopplerUser.Id:0000000000000}" :

@@ -17,7 +17,7 @@ namespace Doppler.Sap.Factory
         private readonly ILogger<BillingRequestHandler> _logger;
         private readonly SapConfig _sapConfig;
         private readonly IHttpClientFactory _httpClientFactory;
-        private const string _countryCode = "AR";
+        private const string _sapSystem = "AR";
 
         public BillingRequestHandler(
             IOptions<SapConfig> sapConfig,
@@ -33,8 +33,8 @@ namespace Doppler.Sap.Factory
 
         public async Task<SapTaskResult> Handle(SapTask dequeuedTask)
         {
-            var sapTaskHandler = _sapServiceSettingsFactory.CreateHandler(_countryCode);
-            var businessPartner = await sapTaskHandler.TryGetBusinessPartner(dequeuedTask.BillingRequest.UserId, dequeuedTask.BillingRequest.FiscalID, dequeuedTask.BillingRequest.PlanType, _countryCode);
+            var sapTaskHandler = _sapServiceSettingsFactory.CreateHandler(_sapSystem);
+            var businessPartner = await sapTaskHandler.TryGetBusinessPartner(dequeuedTask.BillingRequest.UserId, dequeuedTask.BillingRequest.FiscalID, dequeuedTask.BillingRequest.PlanType);
 
             if (businessPartner == null)
             {
@@ -51,7 +51,7 @@ namespace Doppler.Sap.Factory
 
             dequeuedTask.BillingRequest.CardCode = businessPartner.CardCode;
 
-            var serviceSetting = SapServiceSettings.GetSettings(_sapConfig, _countryCode);
+            var serviceSetting = SapServiceSettings.GetSettings(_sapConfig, _sapSystem);
             var message = new HttpRequestMessage
             {
                 RequestUri = new Uri($"{serviceSetting.BaseServerUrl}Orders"),

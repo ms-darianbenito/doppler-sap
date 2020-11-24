@@ -21,7 +21,7 @@ namespace Doppler.Sap.Test
             sapConfigMock.Setup(x => x.Value)
                 .Returns(new SapConfig
                 {
-                    SapServiceConfigsByCountryCode = new Dictionary<string, SapServiceConfig>
+                    SapServiceConfigsBySystem = new Dictionary<string, SapServiceConfig>
                     {
                         { "AR", new SapServiceConfig {
                             CompanyDB = "CompanyDb",

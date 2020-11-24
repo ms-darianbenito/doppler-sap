@@ -22,7 +22,7 @@ namespace Doppler.Sap.Test
             sapConfigMock.Setup(x => x.Value)
                 .Returns(new SapConfig
                 {
-                    SapServiceConfigsByCountryCode = new Dictionary<string, SapServiceConfig>
+                    SapServiceConfigsBySystem = new Dictionary<string, SapServiceConfig>
                     {
                         { "AR", new SapServiceConfig {
                             CompanyDB = "CompanyDb",
@@ -60,7 +60,7 @@ namespace Doppler.Sap.Test
                     RouteId = "route"
                 });
 
-            sapTaskHandlerMock.Setup(x => x.TryGetBusinessPartner(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()))
+            sapTaskHandlerMock.Setup(x => x.TryGetBusinessPartner(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<int>()))
                 .ReturnsAsync(new SapBusinessPartner
                 {
                     FederalTaxID = "FederalTaxId",

@@ -32,19 +32,19 @@ namespace Doppler.Sap.Factory
             _businessPartnerMappers = businessPartnerMappers;
         }
 
-        public ISapTaskHandler CreateHandler(string countryCode)
+        public ISapTaskHandler CreateHandler(string sapSystem)
         {
             // Check if exists settings for the countryCode
-            if (!_sapConfig.SapServiceConfigsByCountryCode.TryGetValue(countryCode, out var serviceSettings))
+            if (!_sapConfig.SapServiceConfigsBySystem.TryGetValue(sapSystem, out var serviceSettings))
             {
-                throw new ArgumentException(nameof(countryCode), $"The countryCode '{countryCode}' is not supported.");
+                throw new ArgumentException(nameof(sapSystem), $"The sapSystem '{sapSystem}' is not supported.");
             }
 
             // Check if exists business partner mapper for the countryCode
-            var mapper = _businessPartnerMappers.FirstOrDefault(m => m.CanMapCountry(countryCode));
+            var mapper = _businessPartnerMappers.FirstOrDefault(m => m.CanMapCountry(sapSystem));
             if (mapper == null)
             {
-                throw new ArgumentException(nameof(countryCode), $"The countryCode '{countryCode}' is not supported.");
+                throw new ArgumentException(nameof(sapSystem), $"The sapSystem '{sapSystem}' is not supported.");
             }
 
             return new SapTaskHandler(_sapConfig, _logger, _httpClientFactory, _dateTimeProvider, serviceSettings, mapper);

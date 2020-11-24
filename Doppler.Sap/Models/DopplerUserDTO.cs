@@ -35,5 +35,6 @@ namespace Doppler.Sap.Models
         public int PaymentMethod { get; set; }
         public string FederalTaxType { get; set; }
         public string FederalTaxID { get; set; }
+        public int BillingSystemId { get; set; }
     }
 }

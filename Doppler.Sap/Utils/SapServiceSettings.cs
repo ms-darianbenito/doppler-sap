@@ -5,11 +5,11 @@ namespace Doppler.Sap.Utils
 {
     public class SapServiceSettings
     {
-        public static SapServiceConfig GetSettings(SapConfig sapConfig, string countryCode)
+        public static SapServiceConfig GetSettings(SapConfig sapConfig, string sapSystem)
         {
-            if (!sapConfig.SapServiceConfigsByCountryCode.TryGetValue(countryCode, out var serviceSettings))
+            if (!sapConfig.SapServiceConfigsBySystem.TryGetValue(sapSystem, out var serviceSettings))
             {
-                throw new ArgumentException(nameof(countryCode), $"The countryCode '{countryCode}' is not supported.");
+                throw new ArgumentException(nameof(sapSystem), $"The sapSystem '{sapSystem}' is not supported.");
             }
 
             return serviceSettings;

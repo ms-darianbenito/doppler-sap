@@ -28,7 +28,7 @@ namespace Doppler.Sap.Test
             sapConfigMock.Setup(x => x.Value)
                 .Returns(new SapConfig
                 {
-                    SapServiceConfigsByCountryCode = new Dictionary<string, SapServiceConfig>
+                    SapServiceConfigsBySystem = new Dictionary<string, SapServiceConfig>
                     {
                         { "AR", new SapServiceConfig {
                             CompanyDB = "CompanyDb",
@@ -65,7 +65,8 @@ namespace Doppler.Sap.Test
                     Id = 1,
                     FederalTaxID = "27111111115",
                     PlanType = 1,
-                    BillingCountryCode = countryCode
+                    BillingCountryCode = countryCode,
+                    BillingSystemId = 16
                 },
                 TaskType = SapTaskEnum.CreateOrUpdateBusinessPartner
             };
@@ -73,7 +74,7 @@ namespace Doppler.Sap.Test
             var sapTaskHandlerMock = new Mock<ISapTaskHandler>();
             var sapServiceSettingsFactoryMock = new Mock<ISapServiceSettingsFactory>();
 
-            sapServiceSettingsFactoryMock.Setup(x => x.CreateHandler(countryCode)).Throws(new ArgumentException($"The countryCode '{countryCode}' is not supported."));
+            sapServiceSettingsFactoryMock.Setup(x => x.CreateHandler(It.IsAny<string>())).Throws(new ArgumentException($"The sapSystem '{countryCode}' is not supported."));
 
             var handler = new CreateOrUpdateBusinessPartnerHandler(
                 sapConfigMock.Object,
@@ -81,7 +82,7 @@ namespace Doppler.Sap.Test
                 sapServiceSettingsFactoryMock.Object);
 
             var ex = Assert.ThrowsAsync<ArgumentException>(() => handler.Handle(sapTask));
-            Assert.Equal($"The countryCode '{countryCode}' is not supported.", ex.Result.Message);
+            Assert.Equal($"The sapSystem '{countryCode}' is not supported.", ex.Result.Message);
         }
 
         [Fact]
@@ -91,7 +92,7 @@ namespace Doppler.Sap.Test
             sapConfigMock.Setup(x => x.Value)
                 .Returns(new SapConfig
                 {
-                    SapServiceConfigsByCountryCode = new Dictionary<string, SapServiceConfig>
+                    SapServiceConfigsBySystem = new Dictionary<string, SapServiceConfig>
                     {
                         { "AR", new SapServiceConfig {
                             CompanyDB = "CompanyDb",
@@ -128,7 +129,8 @@ namespace Doppler.Sap.Test
                     Id = 1,
                     FederalTaxID = "27111111115",
                     PlanType = 1,
-                    BillingCountryCode = "AR"
+                    BillingCountryCode = "AR",
+                    BillingSystemId = 9
                 },
                 TaskType = SapTaskEnum.CreateOrUpdateBusinessPartner
             };
@@ -182,7 +184,7 @@ namespace Doppler.Sap.Test
             sapConfigMock.Setup(x => x.Value)
                 .Returns(new SapConfig
                 {
-                    SapServiceConfigsByCountryCode = new Dictionary<string, SapServiceConfig>
+                    SapServiceConfigsBySystem = new Dictionary<string, SapServiceConfig>
                     {
                         { "AR", new SapServiceConfig {
                             CompanyDB = "CompanyDb",
@@ -219,7 +221,8 @@ namespace Doppler.Sap.Test
                     Id = 1,
                     FederalTaxID = "27111111115",
                     PlanType = 1,
-                    BillingCountryCode = "AR"
+                    BillingCountryCode = "AR",
+                    BillingSystemId = 9
                 },
                 TaskType = SapTaskEnum.CreateOrUpdateBusinessPartner
             };

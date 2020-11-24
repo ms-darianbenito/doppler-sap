@@ -146,7 +146,7 @@ namespace Doppler.Sap.Factory
         {
             var existentBusinessPartner = await TryGetBusinessPartner(task.DopplerUser.Id, task.DopplerUser.FederalTaxID, task.DopplerUser.PlanType.Value);
 
-            var fatherCard = task.DopplerUser.GroupCode == 115 ?
+            var fatherCard = task.DopplerUser.IsFromRelay ?
                     $"CR{task.DopplerUser.Id:0000000000000}" :
                     (task.DopplerUser.IsClientManager ?
                     $"CD{int.Parse("400" + task.DopplerUser.Id.ToString()):0000000000000}" :

@@ -10,65 +10,6 @@ namespace Doppler.Sap.Mappers.BusinessPartner
     public class BusinessPartnerForUsMapper : IBusinessPartnerMapper
     {
         private const string countryCodeSupported = "US";
-        private readonly Dictionary<int, string> states = new Dictionary<int, string>
-        {
-            {4828,"AL"}, // Alabama
-            {4829,"AK"},  // Alaska
-            {4830,"AS"}, // American Samoa
-            {4831,"AZ"}, // Arizona
-            {4832,"AR"},  // Arkansas
-            {4833,"CA"},  // California
-            {4834,"CO"},  // Colorado
-            {4835,"CT"},  // Connecticut
-            {4836,"DE"}, // Delaware
-            {4838,"FL"},  // Florida
-            {4839,"GA"}, // Georgia
-            {4840,"GU"},  // Guam
-            {4841,"HI"},  // Hawaii
-            {4842,"ID"}, // Idaho
-            {4843,"IL"}, // Illinois
-            {4844,"IN"}, // Indiana
-            {4845,"IA"},  // Iowa
-            {4846,"KS"}, // Kansas
-            {4847,"KY"}, // Kentucky
-            {4848,"LA"}, // Louisiana
-            {4849,"ME"}, // Maine
-            {4850,"MD"}, // Maryland
-            {4851,"MA"}, // Massachusetts
-            {4852,"MI"}, // Michigan
-            {4853,"AL"}, // Minnesota
-            {4854,"MN"},  // Mississippi
-            {4855,"MO"}, // Missouri
-            {4856,"MT"}, // Montana
-            {4857,"NE"},  // Nebraska
-            {4858,"NV"},  // Nevada
-            {4859,"NH"},  // New Hampshire
-            {4860,"NJ"},  // New Jersey
-            {4861,"NM"}, // New Mexico
-            {4862,"NY"},  // New York
-            {4863,"NC"}, // North Carolina
-            {4864,"ND"},  // North Dakota
-            {4865,"MP"},  // Northern Mariana Islands
-            {4866,"OH"}, // Ohio
-            {4867,"OK"}, // Oklahoma
-            {4868,"OR"}, // Oregon
-            {4869,"PA"},  // Pennsylvania
-            {4870,"PR"}, // Puerto Rico
-            {4871,"RI"}, // Rhode Island
-            {4872,"SC"}, // South Carolina
-            {4873,"SD"}, // South Dakota
-            {4874,"TN"}, // Tennessee
-            {4875,"TX"}, // Texas
-            {4876,"--"}, // United States Minor Outlying Islands
-            {4877,"UT"},  // Utah
-            {4878,"VT"}, // Vermont
-            {4879,"VI"}, // Virgin Islands, U.S.
-            {4880,"VA"},  // Virginia
-            {4881,"WA"},  // Washington
-            {4882,"WV"},  // West Virginia
-            {4883,"WI"},  // Wisconsin
-            {4884,"WY"},  // Wyoming
-        };
 
         public bool CanMapCountry(string countryCode)
         {
@@ -145,8 +86,7 @@ namespace Doppler.Sap.Mappers.BusinessPartner
                             ZipCode = dopplerUser.BillingZip != null ? dopplerUser.BillingZip.ToUpper() : "",
                             City = dopplerUser.BillingCity != null ? dopplerUser.BillingCity.ToUpper() : "",
                             Country = dopplerUser.BillingCountryCode != null ? dopplerUser.BillingCountryCode.ToUpper() : "",
-                            State = dopplerUser.GroupCode == 115 ? dopplerUser.BillingStateId.ToString() :
-                                    (states.TryGetValue(dopplerUser.BillingStateId.Value, out var sapBillStateId) ? sapBillStateId : "99"),
+                            State = !string.IsNullOrEmpty(dopplerUser.BillingStateId) ? dopplerUser.BillingStateId : "99",
                             AddressType = "bo_BillTo",
                                 BPCode =  cardCode,
                             RowNum = 0
@@ -158,8 +98,7 @@ namespace Doppler.Sap.Mappers.BusinessPartner
                             ZipCode = dopplerUser.BillingZip != null ? dopplerUser.BillingZip.ToUpper() : "",
                             City = dopplerUser.BillingCity != null ? dopplerUser.BillingCity.ToUpper() : "",
                             Country = dopplerUser.BillingCountryCode != null ? dopplerUser.BillingCountryCode.ToUpper() : "",
-                            State = dopplerUser.GroupCode == 115 ? dopplerUser.BillingStateId.ToString() :
-                                    (states.TryGetValue(dopplerUser.BillingStateId.Value, out var sapShipStateId) ? sapShipStateId : "99"),
+                            State = !string.IsNullOrEmpty(dopplerUser.BillingStateId) ? dopplerUser.BillingStateId : "99",
                             AddressType = "bo_ShipTo",
                                 BPCode =  cardCode,
                             RowNum = 1

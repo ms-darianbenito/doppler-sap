@@ -11,7 +11,6 @@ namespace Doppler.Sap.Models
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public string Company { get; set; }
-        public int? StateId { get; set; }
         public string CountryCode { get; set; }
         public string Address { get; set; }
         public string BillingAddress { get; set; }
@@ -30,7 +29,7 @@ namespace Doppler.Sap.Models
         public bool? IsInbound { get; set; }
         public string BillingCity { get; set; }
         public string BillingCountryCode { get; set; }
-        public int? BillingStateId { get; set; }
+        public string BillingStateId { get; set; }
         public int? PlanType { get; set; }
         public int PaymentMethod { get; set; }
         public string FederalTaxType { get; set; }

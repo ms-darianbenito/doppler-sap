@@ -3,13 +3,44 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Mail;
-using System.Threading.Tasks;
 
 namespace Doppler.Sap.Mappers.BusinessPartner
 {
-    public class BusinessPartnerForUsMapper : IBusinessPartnerMapper
+    public class BusinessPartnerForUsMapper : BusinessPartnerMapper, IBusinessPartnerMapper
     {
         private const string countryCodeSupported = "US";
+        private readonly Dictionary<int, int> dopplerGroupCodes = new Dictionary<int, int>
+        {
+            {2,103}, //alto volumen
+            {3,102}, //prepago
+            {4,100}  //contactos
+        };
+
+        private readonly Dictionary<int, int> clientManagerGroupCodes = new Dictionary<int, int>
+        {
+            {1,104}, //Client Manager
+            {2,105}, //Client Manager Resel
+        };
+
+        private readonly Dictionary<int, int> relayGroupCodes = new Dictionary<int, int>
+        {
+            {5,106}, //Relay
+        };
+
+        /// <summary>
+        /// Key: PlanType; Value: GroupCode
+        /// </summary>
+        protected override Dictionary<int, int> DopplerGroupCodes { get => dopplerGroupCodes; }
+
+        /// <summary>
+        /// Key: ClientManagerType; Value: GroupCode
+        /// </summary>
+        protected override Dictionary<int, int> ClientManagerGroupCodes { get => clientManagerGroupCodes; }
+
+        /// <summary>
+        /// Key: PlanType; Value: GroupCode
+        /// </summary>
+        protected override Dictionary<int, int> RelayGroupCodes { get => relayGroupCodes; }
 
         public bool CanMapCountry(string countryCode)
         {
@@ -30,7 +61,7 @@ namespace Doppler.Sap.Mappers.BusinessPartner
             {
                 CardCode = cardCode,
                 CardName = $"{dopplerUser.FirstName} {dopplerUser.LastName}".ToUpper(),
-                GroupCode = dopplerUser.GroupCode,
+                GroupCode = MapGroupCode(dopplerUser),
                 PayTermsGrpCode = -1,
                 ContactPerson = new MailAddress((dopplerUser.BillingEmails != null && dopplerUser.BillingEmails[0] != String.Empty) ?
                 dopplerUser.BillingEmails[0].ToLower() :

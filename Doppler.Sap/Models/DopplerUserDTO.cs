@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
 namespace Doppler.Sap.Models
 {
     public class DopplerUserDto
@@ -23,7 +18,9 @@ namespace Doppler.Sap.Models
         public int GroupCode { get; set; }
         public SapProperties SAPProperties { get; set; }
         public string[] BillingEmails { get; set; }
+        //TODO: Both properties will be remove to use a new Product property.
         public bool IsClientManager { get; set; }
+        public bool IsFromRelay { get; set; }
         public bool Cancelated { get; set; }
         public bool Blocked { get; set; }
         public bool? IsInbound { get; set; }
@@ -35,5 +32,6 @@ namespace Doppler.Sap.Models
         public string FederalTaxType { get; set; }
         public string FederalTaxID { get; set; }
         public int BillingSystemId { get; set; }
+        public int ClientManagerType { get; set; }
     }
 }

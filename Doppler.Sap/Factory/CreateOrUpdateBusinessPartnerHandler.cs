@@ -43,7 +43,7 @@ namespace Doppler.Sap.Factory
         {
             var serviceSetting = SapServiceSettings.GetSettings(_sapConfig, sapSystem);
             var uriString = $"{serviceSetting.BaseServerUrl}{serviceSetting.BusinessPartnerConfig.Endpoint}/";
-            var sapResponse = await SendMessage(dequeuedTask.BusinessPartner, uriString, HttpMethod.Post);
+            var sapResponse = await SendMessage(dequeuedTask.BusinessPartner, uriString, HttpMethod.Post, sapSystem);
 
             var taskResult = new SapTaskResult
             {
@@ -67,7 +67,7 @@ namespace Doppler.Sap.Factory
             dequeuedTask.BusinessPartner.Currency = null;
 
             var uriString = $"{serviceSetting.BaseServerUrl}{serviceSetting.BusinessPartnerConfig.Endpoint}('{dequeuedTask.ExistentBusinessPartner.CardCode}')";
-            var sapResponse = await SendMessage(dequeuedTask.BusinessPartner, uriString, HttpMethod.Patch);
+            var sapResponse = await SendMessage(dequeuedTask.BusinessPartner, uriString, HttpMethod.Patch, sapSystem);
 
             var taskResult = new SapTaskResult
             {
@@ -79,7 +79,7 @@ namespace Doppler.Sap.Factory
             return taskResult;
         }
 
-        private async Task<HttpResponseMessage> SendMessage(SapBusinessPartner businessPartner, string uriString, HttpMethod method)
+        private async Task<HttpResponseMessage> SendMessage(SapBusinessPartner businessPartner, string uriString, HttpMethod method, string sapSystem)
         {
             var message = new HttpRequestMessage()
             {
@@ -94,8 +94,7 @@ namespace Doppler.Sap.Factory
                 Method = method
             };
 
-            var countryCode = businessPartner.BPAddresses.FirstOrDefault() != null ? businessPartner.BPAddresses.FirstOrDefault().Country : string.Empty;
-            var sapTaskHandler = _sapServiceSettingsFactory.CreateHandler(countryCode);
+            var sapTaskHandler = _sapServiceSettingsFactory.CreateHandler(sapSystem);
             var cookies = await sapTaskHandler.StartSession();
             message.Headers.Add("Cookie", cookies.B1Session);
             message.Headers.Add("Cookie", cookies.RouteId);

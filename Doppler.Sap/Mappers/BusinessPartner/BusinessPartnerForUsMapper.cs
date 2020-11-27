@@ -117,7 +117,7 @@ namespace Doppler.Sap.Mappers.BusinessPartner
                             ZipCode = dopplerUser.BillingZip != null ? dopplerUser.BillingZip.ToUpper() : "",
                             City = dopplerUser.BillingCity != null ? dopplerUser.BillingCity.ToUpper() : "",
                             Country = dopplerUser.BillingCountryCode != null ? dopplerUser.BillingCountryCode.ToUpper() : "",
-                            State = !string.IsNullOrEmpty(dopplerUser.BillingStateId) ? dopplerUser.BillingStateId : "99",
+                            State = !string.IsNullOrEmpty(dopplerUser.BillingStateId) && dopplerUser.BillingCountryCode == "US" ? dopplerUser.BillingStateId : null,
                             AddressType = "bo_BillTo",
                                 BPCode =  cardCode,
                             RowNum = 0
@@ -129,7 +129,7 @@ namespace Doppler.Sap.Mappers.BusinessPartner
                             ZipCode = dopplerUser.BillingZip != null ? dopplerUser.BillingZip.ToUpper() : "",
                             City = dopplerUser.BillingCity != null ? dopplerUser.BillingCity.ToUpper() : "",
                             Country = dopplerUser.BillingCountryCode != null ? dopplerUser.BillingCountryCode.ToUpper() : "",
-                            State = !string.IsNullOrEmpty(dopplerUser.BillingStateId) ? dopplerUser.BillingStateId : "99",
+                            State = !string.IsNullOrEmpty(dopplerUser.BillingStateId) && dopplerUser.BillingCountryCode == "US" ? dopplerUser.BillingStateId : null,
                             AddressType = "bo_ShipTo",
                                 BPCode =  cardCode,
                             RowNum = 1

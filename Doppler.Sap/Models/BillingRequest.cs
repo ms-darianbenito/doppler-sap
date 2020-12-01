@@ -20,5 +20,11 @@ namespace Doppler.Sap.Models
         public double ExtraEmailsFee { get; set; }
         public string PurchaseOrder { get; set; }
         public string FiscalID { get; set; }
+        public int BillingSystemId { get; set; } = 9;
+        public string CardHolder { get; set; }
+        public string CardType { get; set; }
+        public string CardNumber { get; set; }
+        public string CardErrorCode { get; set; }
+        public string CardErrorDetail { get; set; }
     }
 }

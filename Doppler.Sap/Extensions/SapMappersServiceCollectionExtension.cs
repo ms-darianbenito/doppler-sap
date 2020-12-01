@@ -1,4 +1,5 @@
 using Doppler.Sap.Factory;
+using Doppler.Sap.Mappers.Billing;
 using Doppler.Sap.Mappers.BusinessPartner;
 
 namespace Microsoft.Extensions.DependencyInjection
@@ -9,6 +10,8 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             services.AddTransient<IBusinessPartnerMapper, BusinessPartnerForArMapper>();
             services.AddTransient<IBusinessPartnerMapper, BusinessPartnerForUsMapper>();
+            services.AddTransient<IBillingMapper, BillingForArMapper>();
+            services.AddTransient<IBillingMapper, BillingForUsMapper>();
 
             return services;
 

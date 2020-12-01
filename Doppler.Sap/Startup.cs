@@ -3,6 +3,8 @@ using Doppler.Sap.Factory;
 using Doppler.Sap.Models;
 using Doppler.Sap.Services;
 using Doppler.Sap.Utils;
+using Doppler.Sap.Validations.Billing;
+using Doppler.Sap.Validations.BusinessPartner;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -11,6 +13,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Net.Http;
 
 namespace Doppler.Sap
@@ -93,6 +96,14 @@ namespace Doppler.Sap
 
             //Create the MapperFactory and also initializes the mappers
             services.AddSapMappers();
+
+            services.AddSapBillingItems();
+
+            //Validators
+            services.AddTransient<IBillingValidation, BillingForArValidation>();
+            services.AddTransient<IBillingValidation, BillingForUsValidation>();
+            services.AddTransient<IBusinessPartnerValidation, BusinessPartnerForArValidation>();
+            services.AddTransient<IBusinessPartnerValidation, BusinessPartnerForUsValidation>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

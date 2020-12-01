@@ -34,7 +34,7 @@ namespace Doppler.Sap.Factory
             var sapTaskHandler = _sapServiceSettingsFactory.CreateHandler(sapSystem);
             dequeuedTask = await sapTaskHandler.CreateBusinessPartnerFromDopplerUser(dequeuedTask);
 
-            return string.IsNullOrEmpty(dequeuedTask.ExistentBusinessPartner.FederalTaxID) ?
+            return !dequeuedTask.ExistentBusinessPartner.CreateDate.HasValue ?
                 await CreateBusinessPartner(dequeuedTask, sapSystem) :
                 await UpdateBusinessPartner(dequeuedTask, sapSystem);
         }
@@ -43,7 +43,7 @@ namespace Doppler.Sap.Factory
         {
             var serviceSetting = SapServiceSettings.GetSettings(_sapConfig, sapSystem);
             var uriString = $"{serviceSetting.BaseServerUrl}{serviceSetting.BusinessPartnerConfig.Endpoint}/";
-            var sapResponse = await SendMessage(dequeuedTask.BusinessPartner, uriString, HttpMethod.Post, sapSystem);
+            var sapResponse = await SendMessage(dequeuedTask.BusinessPartner, sapSystem, uriString, HttpMethod.Post);
 
             var taskResult = new SapTaskResult
             {
@@ -67,7 +67,7 @@ namespace Doppler.Sap.Factory
             dequeuedTask.BusinessPartner.Currency = null;
 
             var uriString = $"{serviceSetting.BaseServerUrl}{serviceSetting.BusinessPartnerConfig.Endpoint}('{dequeuedTask.ExistentBusinessPartner.CardCode}')";
-            var sapResponse = await SendMessage(dequeuedTask.BusinessPartner, uriString, HttpMethod.Patch, sapSystem);
+            var sapResponse = await SendMessage(dequeuedTask.BusinessPartner, sapSystem, uriString, HttpMethod.Patch);
 
             var taskResult = new SapTaskResult
             {
@@ -79,7 +79,7 @@ namespace Doppler.Sap.Factory
             return taskResult;
         }
 
-        private async Task<HttpResponseMessage> SendMessage(SapBusinessPartner businessPartner, string uriString, HttpMethod method, string sapSystem)
+        private async Task<HttpResponseMessage> SendMessage(SapBusinessPartner businessPartner, string sapSystem, string uriString, HttpMethod method)
         {
             var message = new HttpRequestMessage()
             {

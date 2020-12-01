@@ -1,9 +1,11 @@
+using System;
 using System.Collections.Generic;
 
 namespace Doppler.Sap.Models
 {
     public class SapBusinessPartner
     {
+        public DateTime? CreateDate { get; set; }
         public string CardCode { get; set; }
         public string CardName { get; set; }
         public int GroupCode { get; set; }

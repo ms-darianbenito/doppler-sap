@@ -240,6 +240,7 @@ namespace Doppler.Sap.Test
                     {
                         CardCode = "2323423",
                         FederalTaxID = "FederalTaxId",
+                        CreateDate = DateTime.Today,
                         ContactEmployees = new List<SapContactEmployee>() { }
                     }
                 });

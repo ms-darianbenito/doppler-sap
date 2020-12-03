@@ -1,4 +1,4 @@
-using Doppler.Sap.Enums;
+using Doppler.Sap.Mappers.Billing;
 using Doppler.Sap.Models;
 using Doppler.Sap.Utils;
 using Doppler.Sap.Validations.Billing;
@@ -20,6 +20,7 @@ namespace Doppler.Sap.Factory
         private readonly ILogger<BillingRequestHandler> _logger;
         private readonly SapConfig _sapConfig;
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IEnumerable<IBillingMapper> _billingMappers;
         private readonly IEnumerable<IBillingValidation> _billingValidations;
 
         public BillingRequestHandler(
@@ -27,12 +28,14 @@ namespace Doppler.Sap.Factory
             ILogger<BillingRequestHandler> logger,
             ISapServiceSettingsFactory sapServiceSettingsFactory,
             IHttpClientFactory httpClientFactory,
-            IEnumerable<IBillingValidation> billingValidations)
+            IEnumerable<IBillingValidation> billingValidations,
+            IEnumerable<IBillingMapper> billingMappers)
         {
             _sapConfig = sapConfig.Value;
             _logger = logger;
             _sapServiceSettingsFactory = sapServiceSettingsFactory;
             _httpClientFactory = httpClientFactory;
+            _billingMappers = billingMappers;
             _billingValidations = billingValidations;
         }
 
@@ -44,7 +47,8 @@ namespace Doppler.Sap.Factory
                 var sapTaskHandler = _sapServiceSettingsFactory.CreateHandler(sapSystem);
                 var businessPartner = await sapTaskHandler.TryGetBusinessPartner(dequeuedTask.BillingRequest.UserId, dequeuedTask.BillingRequest.FiscalID, dequeuedTask.BillingRequest.PlanType);
 
-                if (!GetValidator(sapSystem).CanCreate(businessPartner, dequeuedTask.BillingRequest))
+                var billingValidator = GetValidator(sapSystem);
+                if (!billingValidator.CanCreate(businessPartner, dequeuedTask.BillingRequest))
                 {
                     return new SapTaskResult
                     {
@@ -72,11 +76,27 @@ namespace Doppler.Sap.Factory
 
                 var client = _httpClientFactory.CreateClient();
                 var sapResponse = await client.SendAsync(message);
+                var responseContent = await sapResponse.Content.ReadAsStringAsync();
+
+                if (sapResponse.IsSuccessStatusCode)
+                {
+                    if (serviceSetting.BillingConfig.NeedCreateIncomingPayments &&
+                        dequeuedTask.BillingRequest.TransactionApproved)
+                    {
+                        responseContent = await sapResponse.Content.ReadAsStringAsync();
+                        var response = JsonConvert.DeserializeObject<SapSaleOrderInvoiceResponse>(responseContent);
+                        return await SendIncomingPaymentToSap(serviceSetting, sapSystem, response, cookies);
+                    }
+                }
+                else
+                {
+                    _logger.LogError($"Invoice/Sales Order could'n create to SAP because exists an error: '{responseContent}'.");
+                }
 
                 return new SapTaskResult
                 {
                     IsSuccessful = sapResponse.IsSuccessStatusCode,
-                    SapResponseContent = await sapResponse.Content.ReadAsStringAsync(),
+                    SapResponseContent = responseContent,
                     TaskName = "Creating Billing Request"
                 };
             }
@@ -91,6 +111,50 @@ namespace Doppler.Sap.Factory
             }
         }
 
+        private async Task<SapTaskResult> SendIncomingPaymentToSap(SapServiceConfig serviceSetting, string sapSystem, SapSaleOrderInvoiceResponse response, SapLoginCookies cookies)
+        {
+            var billingMapper = GetMapper(sapSystem);
+            var incomingPaymentRequest = billingMapper.MapSapIncomingPayment(response.DocEntry, response.CardCode, response.DocTotal, response.DocDate);
+
+            var message = new HttpRequestMessage
+            {
+                RequestUri = new Uri($"{serviceSetting.BaseServerUrl}{serviceSetting.BillingConfig.IncomingPaymentsEndpoint}"),
+                Content = new StringContent(JsonConvert.SerializeObject(incomingPaymentRequest), Encoding.UTF8, "application/json"),
+                Method = HttpMethod.Post
+            };
+
+            message.Headers.Add("Cookie", cookies.B1Session);
+            message.Headers.Add("Cookie", cookies.RouteId);
+
+            var client = _httpClientFactory.CreateClient();
+            var sapResponse = await client.SendAsync(message);
+
+            if (!sapResponse.IsSuccessStatusCode)
+            {
+                _logger.LogError($"Incoming Payment could'n create to SAP because exists an error: '{sapResponse.Content.ReadAsStringAsync()}'.");
+            }
+
+            return new SapTaskResult
+            {
+                IsSuccessful = sapResponse.IsSuccessStatusCode,
+                SapResponseContent = await sapResponse.Content.ReadAsStringAsync(),
+                TaskName = "Creating Billing Request"
+            };
+        }
+
+        private IBillingMapper GetMapper(string sapSystem)
+        {
+            // Check if exists business partner mapper for the sapSystem
+            var mapper = _billingMappers.FirstOrDefault(m => m.CanMapSapSystem(sapSystem));
+            if (mapper == null)
+            {
+                _logger.LogError($"Billing Request won't be sent to SAP because the sapSystem '{sapSystem}' is not supported.");
+                throw new ArgumentException(nameof(sapSystem), $"The sapSystem '{sapSystem}' is not supported.");
+            }
+
+            return mapper;
+        }
+
         private IBillingValidation GetValidator(string sapSystem)
         {
             // Check if exists billing validator for the sapSystem
@@ -98,7 +162,7 @@ namespace Doppler.Sap.Factory
             if (validator == null)
             {
                 _logger.LogError($"Billing Request won't be sent to SAP because the sapSystem '{sapSystem}' is not supported.");
-                throw new ArgumentException(nameof(sapSystem), $"The countryCode '{sapSystem}' is not supported.");
+                throw new ArgumentException(nameof(sapSystem), $"The sapSystem '{sapSystem}' is not supported.");
             }
 
             return validator;

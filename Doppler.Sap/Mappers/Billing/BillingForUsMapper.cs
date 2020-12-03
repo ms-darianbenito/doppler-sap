@@ -1,5 +1,7 @@
 using Doppler.Sap.Models;
 using Doppler.Sap.Services;
+using Doppler.Sap.Utils;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -15,8 +17,10 @@ namespace Doppler.Sap.Mappers.Billing
         private const string _costingCode3 = "USA";
         private const string _costingCode4 = "NOAPL4";
         private const string _currencyCode = "$";
+        private const string _transferAccount = "1.1.01.2.001";
 
         private readonly ISapBillingItemsService _sapBillingItemsService;
+        private readonly IDateTimeProvider _dateTimeProvider;
 
         private readonly Dictionary<int?, string> periodicities = new Dictionary<int?, string>
         {
@@ -27,9 +31,10 @@ namespace Doppler.Sap.Mappers.Billing
         };
 
 
-        public BillingForUsMapper(ISapBillingItemsService sapBillingItemsService)
+        public BillingForUsMapper(ISapBillingItemsService sapBillingItemsService, IDateTimeProvider dateTimeProvider)
         {
             _sapBillingItemsService = sapBillingItemsService;
+            _dateTimeProvider = dateTimeProvider;
         }
 
         public bool CanMapSapSystem(string sapSystem)
@@ -121,8 +126,37 @@ namespace Doppler.Sap.Mappers.Billing
             sapSaleOrder.UserId = billingRequest.Id;
             sapSaleOrder.PlanType = billingRequest.PlanType;
             sapSaleOrder.BillingSystemId = billingRequest.BillingSystemId;
+            sapSaleOrder.TransactionApproved = billingRequest.TransactionApproved;
 
             return sapSaleOrder;
+        }
+
+        public SapIncomingPaymentModel MapSapIncomingPayment(int docEntry, string cardCode, decimal docTotal, DateTime docDate)
+        {
+            var newIncomingPayment = new SapIncomingPaymentModel
+            {
+                DocDate = docDate.ToString("yyyy-MM-dd"),
+                TransferDate = _dateTimeProvider.UtcNow.ToString("yyyy-MM-dd"),
+                TaxDate = _dateTimeProvider.UtcNow.ToString("yyyy-MM-dd"),
+                CardCode = cardCode,
+                DocType = "rCustomer",
+                DocCurrency = _currencyCode,
+                TransferAccount = _transferAccount,
+                TransferSum = docTotal,
+                JournalRemarks = $"Pagos recibidos - {cardCode}",
+                PaymentInvoices = new List<SapPaymentInvoiceModel>
+                {
+                    new SapPaymentInvoiceModel
+                    {
+                        LineNum = 0,
+                        SumApplied = docTotal,
+                        DocEntry = docEntry,
+                        InvoiceType = "it_Invoice"
+                    }
+                }
+            };
+
+            return newIncomingPayment;
         }
     }
 }

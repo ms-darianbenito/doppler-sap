@@ -18,10 +18,14 @@ namespace Doppler.Sap.Test
         public async Task BillingService_ShouldNotBeAddTaskInQueue_WhenCurrencyRateListIsEmpty()
         {
             var queuingServiceMock = new Mock<IQueuingService>();
+            var dateTimeProviderMock = new Mock<IDateTimeProvider>();
+            dateTimeProviderMock.Setup(x => x.UtcNow)
+                .Returns(new DateTime(2019, 09, 25));
+
             var billingMappers = new List<IBillingMapper>
             {
                 new BillingForArMapper(null),
-                new BillingForUsMapper(null)
+                new BillingForUsMapper(null, dateTimeProviderMock.Object)
             };
 
             var billingService = new BillingService(queuingServiceMock.Object,
@@ -42,10 +46,14 @@ namespace Doppler.Sap.Test
         public async Task BillingService_ShouldBeAddTaskInQueue_WhenCurrencyRateListHasOneValidElement()
         {
             var queuingServiceMock = new Mock<IQueuingService>();
+            var dateTimeProviderMock = new Mock<IDateTimeProvider>();
+            dateTimeProviderMock.Setup(x => x.UtcNow)
+                .Returns(new DateTime(2019, 09, 25));
+
             var billingMappers = new List<IBillingMapper>
             {
                 new BillingForArMapper(null),
-                new BillingForUsMapper(null)
+                new BillingForUsMapper(null, dateTimeProviderMock.Object)
             };
 
             var billingService = new BillingService(queuingServiceMock.Object,
@@ -74,17 +82,17 @@ namespace Doppler.Sap.Test
         [Fact]
         public async Task BillingService_ShouldBeAddThreeTasksInQueue_WhenListHasOneValidElementWithFridayDay()
         {
+            var dateTimeProviderMock = new Mock<IDateTimeProvider>();
+            dateTimeProviderMock.Setup(x => x.UtcNow)
+                .Returns(new DateTime(2020, 12, 04));
+
             var billingMappers = new List<IBillingMapper>
             {
                 new BillingForArMapper(null),
-                new BillingForUsMapper(null)
+                new BillingForUsMapper(null, dateTimeProviderMock.Object)
             };
 
             var queuingServiceMock = new Mock<IQueuingService>();
-            var dateTimeProviderMock = new Mock<IDateTimeProvider>();
-            dateTimeProviderMock.Setup(x => x.UtcNow)
-                .Returns(new DateTime(2020, 09, 25));
-
             var billingService = new BillingService(queuingServiceMock.Object,
                 dateTimeProviderMock.Object,
                 Mock.Of<ILogger<BillingService>>(),
@@ -132,17 +140,17 @@ namespace Doppler.Sap.Test
             sapBillingItemsServiceMock.Setup(x => x.GetItemCode(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>())).Returns(itemCode);
             sapBillingItemsServiceMock.Setup(x => x.GetItems(It.IsAny<int>())).Returns(items);
 
+            var dateTimeProviderMock = new Mock<IDateTimeProvider>();
+            dateTimeProviderMock.Setup(x => x.UtcNow)
+                .Returns(new DateTime(2019, 09, 25));
+
             var billingMappers = new List<IBillingMapper>
             {
                 new BillingForArMapper(sapBillingItemsServiceMock.Object),
-                new BillingForUsMapper(sapBillingItemsServiceMock.Object)
+                new BillingForUsMapper(sapBillingItemsServiceMock.Object, dateTimeProviderMock.Object)
             };
 
             var queuingServiceMock = new Mock<IQueuingService>();
-            var dateTimeProviderMock = new Mock<IDateTimeProvider>();
-            dateTimeProviderMock.Setup(x => x.UtcNow)
-                .Returns(new DateTime(2020, 09, 25));
-
             var billingService = new BillingService(queuingServiceMock.Object,
                 dateTimeProviderMock.Object,
                 Mock.Of<ILogger<BillingService>>(),
@@ -168,17 +176,20 @@ namespace Doppler.Sap.Test
         [Fact]
         public async Task BillingService_ShouldBeAddOneTaskInQueue_WhenBillingRequestListHasOneInvalidElement()
         {
+            var dateTimeProviderMock = new Mock<IDateTimeProvider>();
+            dateTimeProviderMock.Setup(x => x.UtcNow)
+                .Returns(new DateTime(2019, 09, 25));
+
             var billingMappers = new List<IBillingMapper>
             {
-                new BillingForArMapper(Mock.Of<ISapBillingItemsService>()),
-                new BillingForUsMapper(Mock.Of<ISapBillingItemsService>())
+                new BillingForArMapper(null),
+                new BillingForUsMapper(null, dateTimeProviderMock.Object)
             };
 
             var slackServiceMock = new Mock<ISlackService>();
             slackServiceMock.Setup(x => x.SendNotification(It.IsAny<string>())).Returns(Task.CompletedTask);
 
             var queuingServiceMock = new Mock<IQueuingService>();
-            var dateTimeProviderMock = new Mock<IDateTimeProvider>();
 
             var billingService = new BillingService(queuingServiceMock.Object,
                 dateTimeProviderMock.Object,
@@ -205,17 +216,20 @@ namespace Doppler.Sap.Test
         [Fact]
         public async Task BillingService_ShouldBeAddOneTaskInQueue_WhenBillingRequestListHasOneInvalidCountryCodeElement()
         {
+            var dateTimeProviderMock = new Mock<IDateTimeProvider>();
+            dateTimeProviderMock.Setup(x => x.UtcNow)
+                .Returns(new DateTime(2019, 09, 25));
+
             var billingMappers = new List<IBillingMapper>
             {
-                new BillingForArMapper(Mock.Of<ISapBillingItemsService>()),
-                new BillingForUsMapper(Mock.Of<ISapBillingItemsService>())
+                new BillingForArMapper(null),
+                new BillingForUsMapper(null, dateTimeProviderMock.Object)
             };
 
             var slackServiceMock = new Mock<ISlackService>();
             slackServiceMock.Setup(x => x.SendNotification(It.IsAny<string>())).Returns(Task.CompletedTask);
 
             var queuingServiceMock = new Mock<IQueuingService>();
-            var dateTimeProviderMock = new Mock<IDateTimeProvider>();
 
             var billingService = new BillingService(queuingServiceMock.Object,
                 dateTimeProviderMock.Object,

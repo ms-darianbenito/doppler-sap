@@ -5,7 +5,10 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Doppler.Sap.Factory;
+using Doppler.Sap.Mappers.Billing;
 using Doppler.Sap.Models;
+using Doppler.Sap.Services;
+using Doppler.Sap.Utils;
 using Doppler.Sap.Validations.Billing;
 using Doppler.Sap.Validations.BusinessPartner;
 using Microsoft.Extensions.Logging;
@@ -25,6 +28,16 @@ namespace Doppler.Sap.Test
             {
                 new BillingForArValidation(Mock.Of<ILogger<BillingForArValidation>>()),
                 new BillingForUsValidation(Mock.Of<ILogger<BillingForUsValidation>>())
+            };
+
+            var dateTimeProviderMock = new Mock<IDateTimeProvider>();
+            dateTimeProviderMock.Setup(x => x.UtcNow)
+                .Returns(new DateTime(2019, 09, 25));
+
+            var billingMappers = new List<IBillingMapper>
+            {
+                new BillingForArMapper(Mock.Of<ISapBillingItemsService>()),
+                new BillingForUsMapper(Mock.Of<ISapBillingItemsService>(), dateTimeProviderMock.Object)
             };
 
             var sapConfigMock = new Mock<IOptions<SapConfig>>();
@@ -88,7 +101,8 @@ namespace Doppler.Sap.Test
                 Mock.Of<ILogger<BillingRequestHandler>>(),
                 sapServiceSettingsFactoryMock.Object,
                 httpClientFactoryMock.Object,
-                billingValidations);
+                billingValidations,
+                billingMappers);
 
             var httpResponseMessage = new HttpResponseMessage
             {
@@ -125,6 +139,16 @@ namespace Doppler.Sap.Test
                 new BillingForUsValidation(Mock.Of<ILogger<BillingForUsValidation>>())
             };
 
+            var dateTimeProviderMock = new Mock<IDateTimeProvider>();
+            dateTimeProviderMock.Setup(x => x.UtcNow)
+                .Returns(new DateTime(2019, 09, 25));
+
+            var billingMappers = new List<IBillingMapper>
+            {
+                new BillingForArMapper(Mock.Of<ISapBillingItemsService>()),
+                new BillingForUsMapper(Mock.Of<ISapBillingItemsService>(), dateTimeProviderMock.Object)
+            };
+
             var sapConfigMock = new Mock<IOptions<SapConfig>>();
             var httpClientFactoryMock = new Mock<IHttpClientFactory>();
             var httpMessageHandlerMock = new Mock<HttpMessageHandler>();
@@ -152,7 +176,8 @@ namespace Doppler.Sap.Test
                 Mock.Of<ILogger<BillingRequestHandler>>(),
                 sapServiceSettingsFactoryMock.Object,
                 httpClientFactoryMock.Object,
-                billingValidations);
+                billingValidations,
+                billingMappers);
 
             var sapTask = new SapTask
             {
@@ -173,6 +198,16 @@ namespace Doppler.Sap.Test
             {
                 new BillingForArValidation(Mock.Of<ILogger<BillingForArValidation>>()),
                 new BillingForUsValidation(Mock.Of<ILogger<BillingForUsValidation>>())
+            };
+
+            var dateTimeProviderMock = new Mock<IDateTimeProvider>();
+            dateTimeProviderMock.Setup(x => x.UtcNow)
+                .Returns(new DateTime(2019, 09, 25));
+
+            var billingMappers = new List<IBillingMapper>
+            {
+                new BillingForArMapper(Mock.Of<ISapBillingItemsService>()),
+                new BillingForUsMapper(Mock.Of<ISapBillingItemsService>(), dateTimeProviderMock.Object)
             };
 
             var sapConfigMock = new Mock<IOptions<SapConfig>>();
@@ -207,7 +242,8 @@ namespace Doppler.Sap.Test
                 Mock.Of<ILogger<BillingRequestHandler>>(),
                 sapServiceSettingsFactoryMock.Object,
                 httpClientFactoryMock.Object,
-                billingValidations);
+                billingValidations,
+                billingMappers);
 
             var sapTask = new SapTask
             {
@@ -242,7 +278,8 @@ namespace Doppler.Sap.Test
                 Mock.Of<ILogger<BillingRequestHandler>>(),
                 sapServiceSettingsFactoryMock.Object,
                 httpClientFactoryMock.Object,
-                null);
+                It.IsAny<IEnumerable<IBillingValidation>>(),
+                It.IsAny<IEnumerable<IBillingMapper>>());
 
 
             var result = await handler.Handle(sapTask);

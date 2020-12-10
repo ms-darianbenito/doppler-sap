@@ -33,5 +33,6 @@ namespace Doppler.Sap.Models
         public string FederalTaxID { get; set; }
         public int BillingSystemId { get; set; }
         public int ClientManagerType { get; set; }
+        public string County { get; set; }
     }
 }

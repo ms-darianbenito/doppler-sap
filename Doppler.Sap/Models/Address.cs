@@ -11,5 +11,6 @@ namespace Doppler.Sap.Models
         public string AddressType { get; set; }
         public string BPCode { get; set; }
         public int RowNum { get; set; }
+        public string County { get; set; }
     }
 }

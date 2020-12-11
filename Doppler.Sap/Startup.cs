@@ -80,6 +80,13 @@ namespace Doppler.Sap
                     UseCookies = false
                 });
             services.AddSapServices();
+
+            var timezoneConfig = new TimeZoneConfigurations
+            {
+                InvoicesTimeZone = TimeZoneHelper.GetTimeZoneByOperativeSystem(Configuration["SapConfig:InvoicesTimeZone"])
+            };
+            services.AddSingleton(timezoneConfig);
+
             services.AddSingleton<IQueuingService, QueuingService>();
             services.AddTransient<ISapService, SapService>();
 

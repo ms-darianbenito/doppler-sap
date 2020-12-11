@@ -1,5 +1,6 @@
 using Doppler.Sap.Models;
 using Doppler.Sap.Services;
+using Doppler.Sap.Utils;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -16,10 +17,14 @@ namespace Doppler.Sap.Mappers.Billing
         private const string _costingCode4 = "NOAPLI4";
 
         private readonly ISapBillingItemsService _sapBillingItemsService;
+        private readonly IDateTimeProvider _dateTimeProvider;
+        private readonly TimeZoneConfigurations _timezoneConfig;
 
-        public BillingForArMapper(ISapBillingItemsService sapBillingItemsService)
+        public BillingForArMapper(ISapBillingItemsService sapBillingItemsService, IDateTimeProvider dateTimeProvider, TimeZoneConfigurations timezoneConfig)
         {
             _sapBillingItemsService = sapBillingItemsService;
+            _dateTimeProvider = dateTimeProvider;
+            _timezoneConfig = timezoneConfig;
         }
 
         public bool CanMapSapSystem(string sapSystem)
@@ -33,7 +38,10 @@ namespace Doppler.Sap.Mappers.Billing
             {
                 NumAtCard = billingRequest.PurchaseOrder ?? "",
                 U_DPL_RECURRING_SERV = billingRequest.IsPlanUpgrade ? "N" : "Y",
-                DocumentLines = new List<SapDocumentLineModel>()
+                DocumentLines = new List<SapDocumentLineModel>(),
+                DocDate = _dateTimeProvider.GetDateByTimezoneId(_dateTimeProvider.UtcNow, _timezoneConfig.InvoicesTimeZone).ToString("yyyy-MM-dd"),
+                DocDueDate = _dateTimeProvider.GetDateByTimezoneId(_dateTimeProvider.UtcNow, _timezoneConfig.InvoicesTimeZone).ToString("yyyy-MM-dd"),
+                TaxDate = _dateTimeProvider.GetDateByTimezoneId(_dateTimeProvider.UtcNow, _timezoneConfig.InvoicesTimeZone).ToString("yyyy-MM-dd")
             };
             var currencyCode = Dictionary.CurrencyDictionary.TryGetValue(billingRequest.Currency, out var code) ? code : "";
 

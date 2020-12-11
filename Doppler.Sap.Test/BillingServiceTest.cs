@@ -7,6 +7,7 @@ using Doppler.Sap.Services;
 using Doppler.Sap.Utils;
 using Doppler.Sap.Validations.Billing;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Moq;
 using Xunit;
 
@@ -17,6 +18,11 @@ namespace Doppler.Sap.Test
         [Fact]
         public async Task BillingService_ShouldNotBeAddTaskInQueue_WhenCurrencyRateListIsEmpty()
         {
+            var sapConfigMock = new Mock<IOptions<SapConfig>>();
+            var timeZoneConfigurations = new TimeZoneConfigurations
+            {
+                InvoicesTimeZone = TimeZoneHelper.GetTimeZoneByOperativeSystem("Argentina Standard Time")
+            };
             var queuingServiceMock = new Mock<IQueuingService>();
             var dateTimeProviderMock = new Mock<IDateTimeProvider>();
             dateTimeProviderMock.Setup(x => x.UtcNow)
@@ -24,8 +30,8 @@ namespace Doppler.Sap.Test
 
             var billingMappers = new List<IBillingMapper>
             {
-                new BillingForArMapper(null),
-                new BillingForUsMapper(null, dateTimeProviderMock.Object)
+                new BillingForArMapper(Mock.Of<ISapBillingItemsService>(), dateTimeProviderMock.Object, timeZoneConfigurations),
+                new BillingForUsMapper(Mock.Of<ISapBillingItemsService>(), dateTimeProviderMock.Object, timeZoneConfigurations)
             };
 
             var billingService = new BillingService(queuingServiceMock.Object,
@@ -45,6 +51,11 @@ namespace Doppler.Sap.Test
         [Fact]
         public async Task BillingService_ShouldBeAddTaskInQueue_WhenCurrencyRateListHasOneValidElement()
         {
+            var sapConfigMock = new Mock<IOptions<SapConfig>>();
+            var timeZoneConfigurations = new TimeZoneConfigurations
+            {
+                InvoicesTimeZone = TimeZoneHelper.GetTimeZoneByOperativeSystem("Argentina Standard Time")
+            };
             var queuingServiceMock = new Mock<IQueuingService>();
             var dateTimeProviderMock = new Mock<IDateTimeProvider>();
             dateTimeProviderMock.Setup(x => x.UtcNow)
@@ -52,8 +63,8 @@ namespace Doppler.Sap.Test
 
             var billingMappers = new List<IBillingMapper>
             {
-                new BillingForArMapper(null),
-                new BillingForUsMapper(null, dateTimeProviderMock.Object)
+                new BillingForArMapper(Mock.Of<ISapBillingItemsService>(), dateTimeProviderMock.Object, timeZoneConfigurations),
+                new BillingForUsMapper(Mock.Of<ISapBillingItemsService>(), dateTimeProviderMock.Object, timeZoneConfigurations)
             };
 
             var billingService = new BillingService(queuingServiceMock.Object,
@@ -82,14 +93,19 @@ namespace Doppler.Sap.Test
         [Fact]
         public async Task BillingService_ShouldBeAddThreeTasksInQueue_WhenListHasOneValidElementWithFridayDay()
         {
+            var sapConfigMock = new Mock<IOptions<SapConfig>>();
+            var timeZoneConfigurations = new TimeZoneConfigurations
+            {
+                InvoicesTimeZone = TimeZoneHelper.GetTimeZoneByOperativeSystem("Argentina Standard Time")
+            };
             var dateTimeProviderMock = new Mock<IDateTimeProvider>();
             dateTimeProviderMock.Setup(x => x.UtcNow)
                 .Returns(new DateTime(2020, 12, 04));
 
             var billingMappers = new List<IBillingMapper>
             {
-                new BillingForArMapper(null),
-                new BillingForUsMapper(null, dateTimeProviderMock.Object)
+                new BillingForArMapper(Mock.Of<ISapBillingItemsService>(), dateTimeProviderMock.Object, timeZoneConfigurations),
+                new BillingForUsMapper(Mock.Of<ISapBillingItemsService>(), dateTimeProviderMock.Object, timeZoneConfigurations)
             };
 
             var queuingServiceMock = new Mock<IQueuingService>();
@@ -136,6 +152,11 @@ namespace Doppler.Sap.Test
                 new BillingForUsValidation(Mock.Of<ILogger<BillingForUsValidation>>())
             };
 
+            var sapConfigMock = new Mock<IOptions<SapConfig>>();
+            var timeZoneConfigurations = new TimeZoneConfigurations
+            {
+                InvoicesTimeZone = TimeZoneHelper.GetTimeZoneByOperativeSystem("Argentina Standard Time")
+            };
             var sapBillingItemsServiceMock = new Mock<ISapBillingItemsService>();
             sapBillingItemsServiceMock.Setup(x => x.GetItemCode(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>())).Returns(itemCode);
             sapBillingItemsServiceMock.Setup(x => x.GetItems(It.IsAny<int>())).Returns(items);
@@ -146,8 +167,8 @@ namespace Doppler.Sap.Test
 
             var billingMappers = new List<IBillingMapper>
             {
-                new BillingForArMapper(sapBillingItemsServiceMock.Object),
-                new BillingForUsMapper(sapBillingItemsServiceMock.Object, dateTimeProviderMock.Object)
+                new BillingForArMapper(sapBillingItemsServiceMock.Object, dateTimeProviderMock.Object, timeZoneConfigurations),
+                new BillingForUsMapper(sapBillingItemsServiceMock.Object, dateTimeProviderMock.Object, timeZoneConfigurations)
             };
 
             var queuingServiceMock = new Mock<IQueuingService>();
@@ -176,14 +197,19 @@ namespace Doppler.Sap.Test
         [Fact]
         public async Task BillingService_ShouldBeAddOneTaskInQueue_WhenBillingRequestListHasOneInvalidElement()
         {
+            var sapConfigMock = new Mock<IOptions<SapConfig>>();
+            var timeZoneConfigurations = new TimeZoneConfigurations
+            {
+                InvoicesTimeZone = TimeZoneHelper.GetTimeZoneByOperativeSystem("Argentina Standard Time")
+            };
             var dateTimeProviderMock = new Mock<IDateTimeProvider>();
             dateTimeProviderMock.Setup(x => x.UtcNow)
                 .Returns(new DateTime(2019, 09, 25));
 
             var billingMappers = new List<IBillingMapper>
             {
-                new BillingForArMapper(null),
-                new BillingForUsMapper(null, dateTimeProviderMock.Object)
+                new BillingForArMapper(Mock.Of<ISapBillingItemsService>(), dateTimeProviderMock.Object, timeZoneConfigurations),
+                new BillingForUsMapper(Mock.Of<ISapBillingItemsService>(), dateTimeProviderMock.Object, timeZoneConfigurations)
             };
 
             var slackServiceMock = new Mock<ISlackService>();
@@ -216,14 +242,19 @@ namespace Doppler.Sap.Test
         [Fact]
         public async Task BillingService_ShouldBeAddOneTaskInQueue_WhenBillingRequestListHasOneInvalidCountryCodeElement()
         {
+            var sapConfigMock = new Mock<IOptions<SapConfig>>();
+            var timeZoneConfigurations = new TimeZoneConfigurations
+            {
+                InvoicesTimeZone = TimeZoneHelper.GetTimeZoneByOperativeSystem("Argentina Standard Time")
+            };
             var dateTimeProviderMock = new Mock<IDateTimeProvider>();
             dateTimeProviderMock.Setup(x => x.UtcNow)
                 .Returns(new DateTime(2019, 09, 25));
 
             var billingMappers = new List<IBillingMapper>
             {
-                new BillingForArMapper(null),
-                new BillingForUsMapper(null, dateTimeProviderMock.Object)
+                new BillingForArMapper(Mock.Of<ISapBillingItemsService>(), dateTimeProviderMock.Object, timeZoneConfigurations),
+                new BillingForUsMapper(Mock.Of<ISapBillingItemsService>(), dateTimeProviderMock.Object, timeZoneConfigurations)
             };
 
             var slackServiceMock = new Mock<ISlackService>();

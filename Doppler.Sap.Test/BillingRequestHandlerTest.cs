@@ -10,7 +10,6 @@ using Doppler.Sap.Models;
 using Doppler.Sap.Services;
 using Doppler.Sap.Utils;
 using Doppler.Sap.Validations.Billing;
-using Doppler.Sap.Validations.BusinessPartner;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -30,17 +29,23 @@ namespace Doppler.Sap.Test
                 new BillingForUsValidation(Mock.Of<ILogger<BillingForUsValidation>>())
             };
 
+            var sapConfigMock = new Mock<IOptions<SapConfig>>();
+
+            var timeZoneConfigurations = new TimeZoneConfigurations
+            {
+                InvoicesTimeZone = TimeZoneHelper.GetTimeZoneByOperativeSystem("Argentina Standard Time")
+            };
+
             var dateTimeProviderMock = new Mock<IDateTimeProvider>();
             dateTimeProviderMock.Setup(x => x.UtcNow)
                 .Returns(new DateTime(2019, 09, 25));
 
             var billingMappers = new List<IBillingMapper>
             {
-                new BillingForArMapper(Mock.Of<ISapBillingItemsService>()),
-                new BillingForUsMapper(Mock.Of<ISapBillingItemsService>(), dateTimeProviderMock.Object)
+                new BillingForArMapper(Mock.Of<ISapBillingItemsService>(), dateTimeProviderMock.Object, timeZoneConfigurations),
+                new BillingForUsMapper(Mock.Of<ISapBillingItemsService>(), dateTimeProviderMock.Object, timeZoneConfigurations)
             };
 
-            var sapConfigMock = new Mock<IOptions<SapConfig>>();
             sapConfigMock.Setup(x => x.Value)
                 .Returns(new SapConfig
                 {
@@ -139,17 +144,21 @@ namespace Doppler.Sap.Test
                 new BillingForUsValidation(Mock.Of<ILogger<BillingForUsValidation>>())
             };
 
+            var sapConfigMock = new Mock<IOptions<SapConfig>>();
+            var timeZoneConfigurations = new TimeZoneConfigurations
+            {
+                InvoicesTimeZone = TimeZoneHelper.GetTimeZoneByOperativeSystem("Argentina Standard Time")
+            };
             var dateTimeProviderMock = new Mock<IDateTimeProvider>();
             dateTimeProviderMock.Setup(x => x.UtcNow)
                 .Returns(new DateTime(2019, 09, 25));
 
             var billingMappers = new List<IBillingMapper>
             {
-                new BillingForArMapper(Mock.Of<ISapBillingItemsService>()),
-                new BillingForUsMapper(Mock.Of<ISapBillingItemsService>(), dateTimeProviderMock.Object)
+                new BillingForArMapper(Mock.Of<ISapBillingItemsService>(), dateTimeProviderMock.Object, timeZoneConfigurations),
+                new BillingForUsMapper(Mock.Of<ISapBillingItemsService>(), dateTimeProviderMock.Object, timeZoneConfigurations)
             };
 
-            var sapConfigMock = new Mock<IOptions<SapConfig>>();
             var httpClientFactoryMock = new Mock<IHttpClientFactory>();
             var httpMessageHandlerMock = new Mock<HttpMessageHandler>();
             httpMessageHandlerMock.Protected()
@@ -200,17 +209,20 @@ namespace Doppler.Sap.Test
                 new BillingForUsValidation(Mock.Of<ILogger<BillingForUsValidation>>())
             };
 
+            var sapConfigMock = new Mock<IOptions<SapConfig>>();
+            var timeZoneConfigurations = new TimeZoneConfigurations
+            {
+                InvoicesTimeZone = TimeZoneHelper.GetTimeZoneByOperativeSystem("Argentina Standard Time")
+            };
             var dateTimeProviderMock = new Mock<IDateTimeProvider>();
             dateTimeProviderMock.Setup(x => x.UtcNow)
                 .Returns(new DateTime(2019, 09, 25));
 
             var billingMappers = new List<IBillingMapper>
             {
-                new BillingForArMapper(Mock.Of<ISapBillingItemsService>()),
-                new BillingForUsMapper(Mock.Of<ISapBillingItemsService>(), dateTimeProviderMock.Object)
+                new BillingForArMapper(Mock.Of<ISapBillingItemsService>(), dateTimeProviderMock.Object, timeZoneConfigurations),
+                new BillingForUsMapper(Mock.Of<ISapBillingItemsService>(), dateTimeProviderMock.Object, timeZoneConfigurations)
             };
-
-            var sapConfigMock = new Mock<IOptions<SapConfig>>();
 
             var httpClientFactoryMock = new Mock<IHttpClientFactory>();
             var httpMessageHandlerMock = new Mock<HttpMessageHandler>();

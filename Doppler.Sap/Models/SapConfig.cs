@@ -9,5 +9,6 @@ namespace Doppler.Sap.Models
         public int SessionTimeoutPadding { get; set; }
         public bool UseDummyData { get; set; }
         public Dictionary<string, SapServiceConfig> SapServiceConfigsBySystem { get; set; }
+        public string TimeZone { get; set; }
     }
 }

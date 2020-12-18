@@ -22,5 +22,6 @@ namespace Doppler.Sap.Models
         public string U_DPL_CARD_ERROR_COD { get; set; }
         public string U_DPL_CARD_ERROR_DET { get; set; }
         public bool TransactionApproved { get; set; }
+        public string TransferReference { get; set; }
     }
 }

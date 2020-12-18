@@ -133,11 +133,12 @@ namespace Doppler.Sap.Mappers.Billing
             sapSaleOrder.PlanType = billingRequest.PlanType;
             sapSaleOrder.BillingSystemId = billingRequest.BillingSystemId;
             sapSaleOrder.TransactionApproved = billingRequest.TransactionApproved;
+            sapSaleOrder.TransferReference = billingRequest.TransferReference;
 
             return sapSaleOrder;
         }
 
-        public SapIncomingPaymentModel MapSapIncomingPayment(int docEntry, string cardCode, decimal docTotal, DateTime docDate)
+        public SapIncomingPaymentModel MapSapIncomingPayment(int docEntry, string cardCode, decimal docTotal, DateTime docDate, string transferReference)
         {
             var newIncomingPayment = new SapIncomingPaymentModel
             {
@@ -150,6 +151,7 @@ namespace Doppler.Sap.Mappers.Billing
                 TransferAccount = _transferAccount,
                 TransferSum = docTotal,
                 JournalRemarks = $"Pagos recibidos - {cardCode}",
+                TransferReference = transferReference,
                 PaymentInvoices = new List<SapPaymentInvoiceModel>
                 {
                     new SapPaymentInvoiceModel

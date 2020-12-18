@@ -27,5 +27,6 @@ namespace Doppler.Sap.Models
         public string CardErrorCode { get; set; } = "100";
         public string CardErrorDetail { get; set; }
         public bool TransactionApproved { get; set; }
+        public string TransferReference { get; set; }
     }
 }

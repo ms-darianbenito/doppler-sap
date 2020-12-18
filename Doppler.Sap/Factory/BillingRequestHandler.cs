@@ -85,7 +85,7 @@ namespace Doppler.Sap.Factory
                     {
                         responseContent = await sapResponse.Content.ReadAsStringAsync();
                         var response = JsonConvert.DeserializeObject<SapSaleOrderInvoiceResponse>(responseContent);
-                        return await SendIncomingPaymentToSap(serviceSetting, sapSystem, response, cookies);
+                        return await SendIncomingPaymentToSap(serviceSetting, sapSystem, response, dequeuedTask.BillingRequest.TransferReference, cookies);
                     }
                 }
                 else
@@ -111,10 +111,10 @@ namespace Doppler.Sap.Factory
             }
         }
 
-        private async Task<SapTaskResult> SendIncomingPaymentToSap(SapServiceConfig serviceSetting, string sapSystem, SapSaleOrderInvoiceResponse response, SapLoginCookies cookies)
+        private async Task<SapTaskResult> SendIncomingPaymentToSap(SapServiceConfig serviceSetting, string sapSystem, SapSaleOrderInvoiceResponse response, string transferReference, SapLoginCookies cookies)
         {
             var billingMapper = GetMapper(sapSystem);
-            var incomingPaymentRequest = billingMapper.MapSapIncomingPayment(response.DocEntry, response.CardCode, response.DocTotal, response.DocDate);
+            var incomingPaymentRequest = billingMapper.MapSapIncomingPayment(response.DocEntry, response.CardCode, response.DocTotal, response.DocDate, transferReference);
 
             var message = new HttpRequestMessage
             {

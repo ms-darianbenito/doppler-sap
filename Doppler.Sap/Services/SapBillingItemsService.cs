@@ -17,7 +17,7 @@ namespace Doppler.Sap.Services
         {
             var itemCodesList = GetItems(planType);
 
-            var itemCode = isCustomPlan ? itemCodesList.Where(x => x.CustomPlan.Value)
+            var itemCode = isCustomPlan ? itemCodesList.Where(x => x.CustomPlan.HasValue && x.CustomPlan.Value)
                 .Select(x => x.ItemCode)
                 .FirstOrDefault()
                 : itemCodesList.Where(x => x.emailsQty == creditsOrSubscribersQuantity || x.SubscriberQty == creditsOrSubscribersQuantity)

@@ -25,6 +25,17 @@ namespace Doppler.Sap.Validations.Billing
             return true;
         }
 
+        public bool CanUpdate(SapSaleOrderInvoiceResponse saleOrder, SapSaleOrderModel billingRequest)
+        {
+            if (saleOrder == null)
+            {
+                _logger.LogError($"Failed at updating billing for invoice: {billingRequest.InvoiceId}.");
+                return false;
+            }
+
+            return true;
+        }
+
         public bool CanValidateSapSystem(string sapSystem)
         {
             return _sapSystemSupported == sapSystem;
@@ -36,6 +47,15 @@ namespace Doppler.Sap.Validations.Billing
             {
                 _logger.LogError("Billing Request won't be sent to SAP because it doesn't have the user's Id.");
                 throw new ArgumentException("Value can not be null", "Id");
+            }
+        }
+
+        public void ValidateUpdateRequest(UpdatePaymentStatusRequest updateBillingRequest)
+        {
+            if (updateBillingRequest.InvoiceId.Equals(default))
+            {
+                _logger.LogError("Billing Request won't be sent to SAP because it doesn't have the invoice's Id.");
+                throw new ArgumentException("Value can not be null", "InvoiceId");
             }
         }
     }

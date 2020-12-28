@@ -283,5 +283,104 @@ namespace Doppler.Sap.Test
             queuingServiceMock.Verify(x => x.AddToTaskQueue(It.IsAny<SapTask>()), Times.Never);
             slackServiceMock.Verify(x => x.SendNotification(It.IsAny<string>()), Times.Once);
         }
+
+        [Fact]
+        public async Task BillingService_ShouldBeAddOneTaskInQueue_WhenUpdateBillingRequestHasOneValidElement()
+        {
+            var itemCode = "1.0.1";
+            var items = new List<BillingItemPlanDescriptionModel>
+            {
+                new BillingItemPlanDescriptionModel
+                {
+                    ItemCode = "1.0.1",
+                    description = "Test"
+                }
+            };
+
+            var billingValidations = new List<IBillingValidation>
+            {
+                new BillingForArValidation(Mock.Of<ILogger<BillingForArValidation>>()),
+                new BillingForUsValidation(Mock.Of<ILogger<BillingForUsValidation>>())
+            };
+
+            var sapConfigMock = new Mock<IOptions<SapConfig>>();
+            var timeZoneConfigurations = new TimeZoneConfigurations
+            {
+                InvoicesTimeZone = TimeZoneHelper.GetTimeZoneByOperativeSystem("Argentina Standard Time")
+            };
+            var sapBillingItemsServiceMock = new Mock<ISapBillingItemsService>();
+            sapBillingItemsServiceMock.Setup(x => x.GetItemCode(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>())).Returns(itemCode);
+            sapBillingItemsServiceMock.Setup(x => x.GetItems(It.IsAny<int>())).Returns(items);
+
+            var dateTimeProviderMock = new Mock<IDateTimeProvider>();
+            dateTimeProviderMock.Setup(x => x.UtcNow)
+                .Returns(new DateTime(2019, 09, 25));
+
+            var billingMappers = new List<IBillingMapper>
+            {
+                new BillingForArMapper(sapBillingItemsServiceMock.Object, dateTimeProviderMock.Object, timeZoneConfigurations),
+                new BillingForUsMapper(sapBillingItemsServiceMock.Object, dateTimeProviderMock.Object, timeZoneConfigurations)
+            };
+
+            var queuingServiceMock = new Mock<IQueuingService>();
+            var billingService = new BillingService(queuingServiceMock.Object,
+                dateTimeProviderMock.Object,
+                Mock.Of<ILogger<BillingService>>(),
+                Mock.Of<ISlackService>(),
+                billingMappers,
+                billingValidations);
+
+            var updateBillingRequestList = new UpdatePaymentStatusRequest
+            {
+                BillingSystemId = 9,
+                InvoiceId = 1
+            };
+
+            await billingService.UpdatePaymentStatus(updateBillingRequestList);
+
+            queuingServiceMock.Verify(x => x.AddToTaskQueue(It.IsAny<SapTask>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task BillingService_ShouldBeNotAddOneTaskInQueue_WhenUpdateBillingRequestHasOneInvalidElement()
+        {
+            var sapConfigMock = new Mock<IOptions<SapConfig>>();
+            var timeZoneConfigurations = new TimeZoneConfigurations
+            {
+                InvoicesTimeZone = TimeZoneHelper.GetTimeZoneByOperativeSystem("Argentina Standard Time")
+            };
+            var dateTimeProviderMock = new Mock<IDateTimeProvider>();
+            dateTimeProviderMock.Setup(x => x.UtcNow)
+                .Returns(new DateTime(2019, 09, 25));
+
+            var billingMappers = new List<IBillingMapper>
+            {
+                new BillingForArMapper(Mock.Of<ISapBillingItemsService>(), dateTimeProviderMock.Object, timeZoneConfigurations),
+                new BillingForUsMapper(Mock.Of<ISapBillingItemsService>(), dateTimeProviderMock.Object, timeZoneConfigurations)
+            };
+
+            var slackServiceMock = new Mock<ISlackService>();
+            slackServiceMock.Setup(x => x.SendNotification(It.IsAny<string>())).Returns(Task.CompletedTask);
+
+            var queuingServiceMock = new Mock<IQueuingService>();
+
+            var billingService = new BillingService(queuingServiceMock.Object,
+                dateTimeProviderMock.Object,
+                Mock.Of<ILogger<BillingService>>(),
+                slackServiceMock.Object,
+                billingMappers,
+                null);
+
+            var updateBillingRequestList = new UpdatePaymentStatusRequest
+            {
+                BillingSystemId = 9,
+                InvoiceId = 0
+            };
+
+            await billingService.UpdatePaymentStatus(updateBillingRequestList);
+
+            queuingServiceMock.Verify(x => x.AddToTaskQueue(It.IsAny<SapTask>()), Times.Never);
+            slackServiceMock.Verify(x => x.SendNotification(It.IsAny<string>()), Times.Once);
+        }
     }
 }

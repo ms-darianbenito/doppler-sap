@@ -98,6 +98,9 @@ namespace Doppler.Sap.Test
                     CardCode = "2323423"
                 });
 
+            sapTaskHandlerMock.Setup(x => x.TryGetInvoiceByInvoiceId(It.IsAny<int>()))
+                .ReturnsAsync((SapSaleOrderInvoiceResponse)null);
+
             var sapServiceSettingsFactoryMock = new Mock<ISapServiceSettingsFactory>();
             sapServiceSettingsFactoryMock.Setup(x => x.CreateHandler("AR")).Returns(sapTaskHandlerMock.Object);
 
@@ -128,7 +131,8 @@ namespace Doppler.Sap.Test
                 BillingRequest = new SapSaleOrderModel
                 {
                     BillingSystemId = 9
-                }
+                },
+                TaskType = Enums.SapTaskEnum.BillingRequest
             });
 
             Assert.True(result.IsSuccessful);
@@ -177,6 +181,9 @@ namespace Doppler.Sap.Test
             sapTaskHandlerMock.Setup(x => x.TryGetBusinessPartner(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<int>()))
                 .ReturnsAsync((SapBusinessPartner)null);
 
+            sapTaskHandlerMock.Setup(x => x.TryGetInvoiceByInvoiceId(It.IsAny<int>()))
+                .ReturnsAsync((SapSaleOrderInvoiceResponse)null);
+
             var sapServiceSettingsFactoryMock = new Mock<ISapServiceSettingsFactory>();
             sapServiceSettingsFactoryMock.Setup(x => x.CreateHandler("AR")).Returns(sapTaskHandlerMock.Object);
 
@@ -190,7 +197,8 @@ namespace Doppler.Sap.Test
 
             var sapTask = new SapTask
             {
-                BillingRequest = new SapSaleOrderModel { UserId = 1 }
+                BillingRequest = new SapSaleOrderModel { UserId = 1 },
+                TaskType = Enums.SapTaskEnum.BillingRequest
             };
 
             var result = await handler.Handle(sapTask);
@@ -246,6 +254,9 @@ namespace Doppler.Sap.Test
                     CardCode = "2323423"
                 });
 
+            sapTaskHandlerMock.Setup(x => x.TryGetInvoiceByInvoiceId(It.IsAny<int>()))
+                .ReturnsAsync((SapSaleOrderInvoiceResponse)null);
+
             var sapServiceSettingsFactoryMock = new Mock<ISapServiceSettingsFactory>();
             sapServiceSettingsFactoryMock.Setup(x => x.CreateHandler("AR")).Returns(sapTaskHandlerMock.Object);
 
@@ -259,7 +270,8 @@ namespace Doppler.Sap.Test
 
             var sapTask = new SapTask
             {
-                BillingRequest = new SapSaleOrderModel { UserId = 1 }
+                BillingRequest = new SapSaleOrderModel { UserId = 1 },
+                TaskType = Enums.SapTaskEnum.BillingRequest
             };
 
             var result = await handler.Handle(sapTask);
@@ -299,6 +311,266 @@ namespace Doppler.Sap.Test
             Assert.False(result.IsSuccessful);
             Assert.Equal($"The countryCode '' is not supported.", result.SapResponseContent);
             Assert.Equal("Creating Billing Request", result.TaskName);
+        }
+
+        [Fact]
+        public async Task BillingRequestHandler_ShouldBeNotUpdatedBillingInSap_WhenQueueHasOneElementButNotExistsInvoiceInSap()
+        {
+            var billingValidations = new List<IBillingValidation>
+            {
+                new BillingForArValidation(Mock.Of<ILogger<BillingForArValidation>>()),
+                new BillingForUsValidation(Mock.Of<ILogger<BillingForUsValidation>>())
+            };
+
+            var sapConfigMock = new Mock<IOptions<SapConfig>>();
+            var timeZoneConfigurations = new TimeZoneConfigurations
+            {
+                InvoicesTimeZone = TimeZoneHelper.GetTimeZoneByOperativeSystem("Argentina Standard Time")
+            };
+            var dateTimeProviderMock = new Mock<IDateTimeProvider>();
+
+            var billingMappers = new List<IBillingMapper>
+            {
+                new BillingForArMapper(Mock.Of<ISapBillingItemsService>(), dateTimeProviderMock.Object, timeZoneConfigurations),
+                new BillingForUsMapper(Mock.Of<ISapBillingItemsService>(), dateTimeProviderMock.Object, timeZoneConfigurations)
+            };
+
+            var httpClientFactoryMock = new Mock<IHttpClientFactory>();
+            var httpMessageHandlerMock = new Mock<HttpMessageHandler>();
+            var sapTaskHandlerMock = new Mock<ISapTaskHandler>();
+            sapTaskHandlerMock.Setup(x => x.TryGetInvoiceByInvoiceId(It.IsAny<int>()))
+                .ReturnsAsync((SapSaleOrderInvoiceResponse)null);
+
+            var sapServiceSettingsFactoryMock = new Mock<ISapServiceSettingsFactory>();
+            sapServiceSettingsFactoryMock.Setup(x => x.CreateHandler(It.IsAny<string>())).Returns(sapTaskHandlerMock.Object);
+
+            var handler = new BillingRequestHandler(
+                sapConfigMock.Object,
+                Mock.Of<ILogger<BillingRequestHandler>>(),
+                sapServiceSettingsFactoryMock.Object,
+                httpClientFactoryMock.Object,
+                billingValidations,
+                billingMappers);
+
+            var sapTask = new SapTask
+            {
+                BillingRequest = new SapSaleOrderModel { InvoiceId = 1 },
+                TaskType = Enums.SapTaskEnum.UpdateBilling
+            };
+
+            var result = await handler.Handle(sapTask);
+
+            Assert.False(result.IsSuccessful);
+            Assert.Equal($"Failed at updating billing request for the invoice: {sapTask.BillingRequest.InvoiceId}.", result.SapResponseContent);
+            Assert.Equal("Updating Billing Request", result.TaskName);
+
+            sapServiceSettingsFactoryMock.Verify(x => x.CreateHandler(It.IsAny<string>()), Times.Once);
+            sapTaskHandlerMock.Verify(x => x.TryGetInvoiceByInvoiceId(It.IsAny<int>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task BillingRequestHandler_ShouldBeUpdatedBillingInSapAndNotCreateThePayment_WhenQueueHasOneValidElementAndNotTransactionApproved()
+        {
+            var billingValidations = new List<IBillingValidation>
+            {
+                new BillingForArValidation(Mock.Of<ILogger<BillingForArValidation>>()),
+                new BillingForUsValidation(Mock.Of<ILogger<BillingForUsValidation>>())
+            };
+
+            var sapConfigMock = new Mock<IOptions<SapConfig>>();
+            sapConfigMock.Setup(x => x.Value)
+                .Returns(new SapConfig
+                {
+                    SapServiceConfigsBySystem = new Dictionary<string, SapServiceConfig>
+                    {
+                        { "US", new SapServiceConfig {
+                                CompanyDB = "CompanyDb",
+                                Password = "password",
+                                UserName = "Name",
+                                BaseServerUrl = "http://123.123.123/",
+                                BusinessPartnerConfig = new BusinessPartnerConfig
+                                {
+                                    Endpoint = "BusinessPartners"
+                                },
+                                BillingConfig = new BillingConfig
+                                {
+                                    Endpoint = "Invoices"
+                                }
+                            }
+                        }
+                    }
+                });
+
+            var timeZoneConfigurations = new TimeZoneConfigurations
+            {
+                InvoicesTimeZone = TimeZoneHelper.GetTimeZoneByOperativeSystem("Argentina Standard Time")
+            };
+            var dateTimeProviderMock = new Mock<IDateTimeProvider>();
+
+            var billingMappers = new List<IBillingMapper>
+            {
+                new BillingForArMapper(Mock.Of<ISapBillingItemsService>(), dateTimeProviderMock.Object, timeZoneConfigurations),
+                new BillingForUsMapper(Mock.Of<ISapBillingItemsService>(), dateTimeProviderMock.Object, timeZoneConfigurations)
+            };
+
+            var httpClientFactoryMock = new Mock<IHttpClientFactory>();
+            var httpMessageHandlerMock = new Mock<HttpMessageHandler>();
+
+            httpMessageHandlerMock.Protected()
+                .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(new HttpResponseMessage
+                {
+                    StatusCode = HttpStatusCode.OK,
+                    Content = new StringContent(@"")
+                });
+
+            var httpClient = new HttpClient(httpMessageHandlerMock.Object);
+
+            httpClientFactoryMock.Setup(_ => _.CreateClient(It.IsAny<string>()))
+                .Returns(httpClient);
+
+            var sapTaskHandlerMock = new Mock<ISapTaskHandler>();
+            sapTaskHandlerMock.Setup(x => x.TryGetInvoiceByInvoiceId(It.IsAny<int>()))
+                .ReturnsAsync(new SapSaleOrderInvoiceResponse { CardCode = "0001", DocEntry = 1, DocTotal = 50 });
+
+            sapTaskHandlerMock.Setup(x => x.StartSession())
+                .ReturnsAsync(new SapLoginCookies
+                {
+                    B1Session = "session",
+                    RouteId = "route"
+                });
+
+            var sapServiceSettingsFactoryMock = new Mock<ISapServiceSettingsFactory>();
+            sapServiceSettingsFactoryMock.Setup(x => x.CreateHandler(It.IsAny<string>())).Returns(sapTaskHandlerMock.Object);
+
+            var handler = new BillingRequestHandler(
+                sapConfigMock.Object,
+                Mock.Of<ILogger<BillingRequestHandler>>(),
+                sapServiceSettingsFactoryMock.Object,
+                httpClientFactoryMock.Object,
+                billingValidations,
+                billingMappers);
+
+            var sapTask = new SapTask
+            {
+                BillingRequest = new SapSaleOrderModel { InvoiceId = 1, TransactionApproved = false, BillingSystemId = 2 },
+                TaskType = Enums.SapTaskEnum.UpdateBilling
+            };
+
+            var result = await handler.Handle(sapTask);
+
+            Assert.True(result.IsSuccessful);
+            Assert.Equal("Updating Invoice", result.TaskName);
+
+            sapServiceSettingsFactoryMock.Verify(x => x.CreateHandler(It.IsAny<string>()), Times.Exactly(2));
+            sapTaskHandlerMock.Verify(x => x.TryGetInvoiceByInvoiceId(It.IsAny<int>()), Times.Once);
+            httpMessageHandlerMock.Protected().Verify("SendAsync", Times.Once(), ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Patch), ItExpr.IsAny<CancellationToken>());
+        }
+
+        [Fact]
+        public async Task BillingRequestHandler_ShouldBeUpdatedBillingInSapAndCreateThePayment_WhenQueueHasOneValidElementAndTransactionApproved()
+        {
+            var billingValidations = new List<IBillingValidation>
+            {
+                new BillingForArValidation(Mock.Of<ILogger<BillingForArValidation>>()),
+                new BillingForUsValidation(Mock.Of<ILogger<BillingForUsValidation>>())
+            };
+
+            var sapConfig = new SapConfig
+            {
+                SapServiceConfigsBySystem = new Dictionary<string, SapServiceConfig>
+                {
+                    { "US", new SapServiceConfig {
+                            CompanyDB = "CompanyDb",
+                            Password = "password",
+                            UserName = "Name",
+                            BaseServerUrl = "http://123.123.123/",
+                            BusinessPartnerConfig = new BusinessPartnerConfig
+                            {
+                                Endpoint = "BusinessPartners"
+                            },
+                            BillingConfig = new BillingConfig
+                            {
+                                Endpoint = "Invoices",
+                                NeedCreateIncomingPayments = true,
+                                IncomingPaymentsEndpoint = "IncomingPayments"
+                            }
+                        }
+                    }
+                }
+            };
+
+            var uriForIncomingPayment = sapConfig.SapServiceConfigsBySystem["US"].BaseServerUrl + sapConfig.SapServiceConfigsBySystem["US"].BillingConfig.IncomingPaymentsEndpoint;
+
+            var sapConfigMock = new Mock<IOptions<SapConfig>>();
+            sapConfigMock.Setup(x => x.Value)
+                .Returns(sapConfig);
+
+            var timeZoneConfigurations = new TimeZoneConfigurations
+            {
+                InvoicesTimeZone = TimeZoneHelper.GetTimeZoneByOperativeSystem("Argentina Standard Time")
+            };
+            var dateTimeProviderMock = new Mock<IDateTimeProvider>();
+
+            var billingMappers = new List<IBillingMapper>
+            {
+                new BillingForArMapper(Mock.Of<ISapBillingItemsService>(), dateTimeProviderMock.Object, timeZoneConfigurations),
+                new BillingForUsMapper(Mock.Of<ISapBillingItemsService>(), dateTimeProviderMock.Object, timeZoneConfigurations)
+            };
+
+            var httpClientFactoryMock = new Mock<IHttpClientFactory>();
+            var httpMessageHandlerMock = new Mock<HttpMessageHandler>();
+
+            httpMessageHandlerMock.Protected()
+                .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(new HttpResponseMessage
+                {
+                    StatusCode = HttpStatusCode.OK,
+                    Content = new StringContent(@"")
+                });
+
+            var httpClient = new HttpClient(httpMessageHandlerMock.Object);
+
+            httpClientFactoryMock.Setup(_ => _.CreateClient(It.IsAny<string>()))
+                .Returns(httpClient);
+
+            var sapTaskHandlerMock = new Mock<ISapTaskHandler>();
+            sapTaskHandlerMock.Setup(x => x.TryGetInvoiceByInvoiceId(It.IsAny<int>()))
+                .ReturnsAsync(new SapSaleOrderInvoiceResponse { CardCode = "0001", DocEntry = 1, DocTotal = 50 });
+
+            sapTaskHandlerMock.Setup(x => x.StartSession())
+                .ReturnsAsync(new SapLoginCookies
+                {
+                    B1Session = "session",
+                    RouteId = "route"
+                });
+
+            var sapServiceSettingsFactoryMock = new Mock<ISapServiceSettingsFactory>();
+            sapServiceSettingsFactoryMock.Setup(x => x.CreateHandler(It.IsAny<string>())).Returns(sapTaskHandlerMock.Object);
+
+            var handler = new BillingRequestHandler(
+                sapConfigMock.Object,
+                Mock.Of<ILogger<BillingRequestHandler>>(),
+                sapServiceSettingsFactoryMock.Object,
+                httpClientFactoryMock.Object,
+                billingValidations,
+                billingMappers);
+
+            var sapTask = new SapTask
+            {
+                BillingRequest = new SapSaleOrderModel { InvoiceId = 1, TransactionApproved = true, BillingSystemId = 2 },
+                TaskType = Enums.SapTaskEnum.UpdateBilling
+            };
+
+            var result = await handler.Handle(sapTask);
+
+            Assert.True(result.IsSuccessful);
+            Assert.Equal("Creating/Updating Billing with Payment Request", result.TaskName);
+
+            sapServiceSettingsFactoryMock.Verify(x => x.CreateHandler(It.IsAny<string>()), Times.Exactly(3));
+            sapTaskHandlerMock.Verify(x => x.TryGetInvoiceByInvoiceId(It.IsAny<int>()), Times.Once);
+            httpMessageHandlerMock.Protected().Verify("SendAsync", Times.Once(), ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Patch), ItExpr.IsAny<CancellationToken>());
+            httpMessageHandlerMock.Protected().Verify("SendAsync", Times.Once(), ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Post && req.RequestUri == new Uri(uriForIncomingPayment)), ItExpr.IsAny<CancellationToken>());
         }
     }
 }

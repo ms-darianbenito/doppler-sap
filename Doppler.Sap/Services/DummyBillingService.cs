@@ -15,5 +15,10 @@ namespace Doppler.Sap.Services
         {
             return Task.CompletedTask;
         }
+
+        public Task UpdatePaymentStatus(UpdatePaymentStatusRequest updateBillingRequest)
+        {
+            return Task.CompletedTask;
+        }
     }
 }

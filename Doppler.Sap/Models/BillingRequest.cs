@@ -2,6 +2,7 @@ namespace Doppler.Sap.Models
 {
     public class BillingRequest
     {
+        public int InvoiceId { get; set; }
         public int Id { get; set; }
         public int PlanType { get; set; }
         public int CreditsOrSubscribersQuantity { get; set; }

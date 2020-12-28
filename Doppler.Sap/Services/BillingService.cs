@@ -109,6 +109,30 @@ namespace Doppler.Sap.Services
             }
         }
 
+        public async Task UpdateBilling(UpdateBillingRequest updateBillingRequest)
+        {
+            try
+            {
+                var sapSystem = SapSystemHelper.GetSapSystemByBillingSystem(updateBillingRequest.BillingSystemId);
+                var validator = GetValidator(sapSystem);
+                validator.ValidateUpdateRequest(updateBillingRequest);
+                var billingRequest = GetMapper(sapSystem).MapDopplerUpdateBillingRequestToSapSaleOrder(updateBillingRequest);
+
+                _queuingService.AddToTaskQueue(
+                    new SapTask
+                    {
+                        BillingRequest = billingRequest,
+                        TaskType = SapTaskEnum.UpdateBilling
+                    }
+                );
+            }
+            catch (Exception e)
+            {
+                _logger.LogError($"Failed at update billing request for invoice: {updateBillingRequest.InvoiceId}. Error: {e.Message}");
+                await _slackService.SendNotification($"Failed at update billing request for invoice: {updateBillingRequest.InvoiceId}. Error: {e.Message}");
+            }
+        }
+
         private IBillingMapper GetMapper(string sapSystem)
         {
             // Check if exists business partner mapper for the sapSystem

@@ -116,5 +116,17 @@ namespace Doppler.Sap.Mappers.Billing
             //Is not implemented because at the moment is not necessary the send the Payment to SAP
             throw new System.NotImplementedException();
         }
+
+        public SapSaleOrderModel MapDopplerUpdateBillingRequestToSapSaleOrder(UpdateBillingRequest updateBillingRequest)
+        {
+            return new SapSaleOrderModel
+            {
+                BillingSystemId = updateBillingRequest.BillingSystemId,
+                InvoiceId = updateBillingRequest.InvoiceId,
+                U_DPL_CARD_ERROR_COD = updateBillingRequest.CardErrorCode,
+                U_DPL_CARD_ERROR_DET = updateBillingRequest.CardErrorDetail,
+                TransactionApproved = updateBillingRequest.TransactionApproved
+            };
+        }
     }
 }

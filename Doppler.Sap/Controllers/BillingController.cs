@@ -42,5 +42,15 @@ namespace Doppler.Sap.Controllers
 
             return new OkObjectResult("Successfully");
         }
+
+        [HttpPatch("UpdateBilling")]
+        public async Task<IActionResult> UpdateBilling([FromBody] UpdateBillingRequest billingRequest)
+        {
+            _logger.LogDebug("Updating Billing request.");
+
+            await _billingService.UpdateBilling(billingRequest);
+
+            return new OkObjectResult("Successfully");
+        }
     }
 }

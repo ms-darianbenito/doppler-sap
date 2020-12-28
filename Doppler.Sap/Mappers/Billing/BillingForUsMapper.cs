@@ -56,6 +56,7 @@ namespace Doppler.Sap.Mappers.Billing
                 U_DPL_CARD_TYPE = billingRequest.CardType,
                 U_DPL_CARD_ERROR_COD = billingRequest.CardErrorCode,
                 U_DPL_CARD_ERROR_DET = billingRequest.CardErrorDetail,
+                U_DPL_INV_ID = billingRequest.InvoiceId,
                 DocumentLines = new List<SapDocumentLineModel>(),
                 DocDate = _dateTimeProvider.GetDateByTimezoneId(_dateTimeProvider.UtcNow, _timezoneConfig.InvoicesTimeZone).ToString("yyyy-MM-dd"),
                 DocDueDate = _dateTimeProvider.GetDateByTimezoneId(_dateTimeProvider.UtcNow, _timezoneConfig.InvoicesTimeZone).ToString("yyyy-MM-dd"),
@@ -165,6 +166,18 @@ namespace Doppler.Sap.Mappers.Billing
             };
 
             return newIncomingPayment;
+        }
+
+        public SapSaleOrderModel MapDopplerUpdateBillingRequestToSapSaleOrder(UpdateBillingRequest updateBillingRequest)
+        {
+            return new SapSaleOrderModel
+            {
+                BillingSystemId = updateBillingRequest.BillingSystemId,
+                InvoiceId = updateBillingRequest.InvoiceId,
+                U_DPL_CARD_ERROR_COD = updateBillingRequest.CardErrorCode,
+                U_DPL_CARD_ERROR_DET = updateBillingRequest.CardErrorDetail,
+                TransactionApproved = updateBillingRequest.TransactionApproved
+            };
         }
     }
 }

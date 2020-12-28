@@ -8,5 +8,7 @@ namespace Doppler.Sap.Services
     {
         Task SendCurrencyToSap(List<CurrencyRateDto> currencyRate);
         Task CreateBillingRequest(List<BillingRequest> billingRequests);
+
+        Task UpdateBilling(UpdateBillingRequest updateBillingRequest);
     }
 }

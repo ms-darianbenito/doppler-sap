@@ -20,7 +20,7 @@ namespace Doppler.Sap.Test
     {
         [Fact]
 
-        public void CreateOrUpdateBusinessPartnerHandler_ShouldBeThownsAnExcpetion_WhenCountryCodeNotAROrUS()
+        public async void CreateOrUpdateBusinessPartnerHandler_ShouldBeThownsAnExcpetion_WhenCountryCodeNotAROrUS()
         {
             var countryCode = "MX";
 
@@ -60,6 +60,10 @@ namespace Doppler.Sap.Test
 
             var sapTask = new SapTask
             {
+                BusinessPartner = new SapBusinessPartner
+                {
+                    CardCode = "TestCardCode"
+                },
                 DopplerUser = new DopplerUserDto
                 {
                     Id = 1,
@@ -78,11 +82,15 @@ namespace Doppler.Sap.Test
 
             var handler = new CreateOrUpdateBusinessPartnerHandler(
                 sapConfigMock.Object,
+                Mock.Of<ILogger<CreateOrUpdateBusinessPartnerHandler>>(),
                 httpClientFactoryMock.Object,
                 sapServiceSettingsFactoryMock.Object);
 
-            var ex = Assert.ThrowsAsync<ArgumentException>(() => handler.Handle(sapTask));
-            Assert.Equal($"The sapSystem '{countryCode}' is not supported.", ex.Result.Message);
+            var result = await handler.Handle(sapTask);
+
+            Assert.False(result.IsSuccessful);
+            Assert.Equal($"Failed to create or update the Business Partner for the user: {sapTask.BusinessPartner.CardCode}. Error: The sapSystem '{countryCode}' is not supported.", result.SapResponseContent);
+            Assert.Equal("Create Or Update Business Partner", result.TaskName);
         }
 
         [Fact]
@@ -158,6 +166,7 @@ namespace Doppler.Sap.Test
 
             var handler = new CreateOrUpdateBusinessPartnerHandler(
                 sapConfigMock.Object,
+                Mock.Of<ILogger<CreateOrUpdateBusinessPartnerHandler>>(),
                 httpClientFactoryMock.Object,
                 sapServiceSettingsFactoryMock.Object);
 
@@ -256,6 +265,7 @@ namespace Doppler.Sap.Test
 
             var handler = new CreateOrUpdateBusinessPartnerHandler(
                 sapConfigMock.Object,
+                Mock.Of<ILogger<CreateOrUpdateBusinessPartnerHandler>>(),
                 httpClientFactoryMock.Object,
                 sapServiceSettingsFactoryMock.Object);
 

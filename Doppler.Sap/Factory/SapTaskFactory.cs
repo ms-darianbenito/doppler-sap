@@ -21,6 +21,7 @@ namespace Doppler.Sap.Factory
                 case SapTaskEnum.CurrencyRate:
                     return await ((SetCurrencyRateHandler)_serviceProvider.GetService(typeof(SetCurrencyRateHandler))).Handle(sapTask);
                 case SapTaskEnum.BillingRequest:
+                case SapTaskEnum.UpdateBilling:
                     return await ((BillingRequestHandler)_serviceProvider.GetService(typeof(BillingRequestHandler))).Handle(sapTask);
                 case SapTaskEnum.CreateOrUpdateBusinessPartner:
                     return await ((CreateOrUpdateBusinessPartnerHandler)_serviceProvider.GetService(typeof(CreateOrUpdateBusinessPartnerHandler))).Handle(sapTask);

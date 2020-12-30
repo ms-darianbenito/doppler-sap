@@ -42,5 +42,15 @@ namespace Doppler.Sap.Controllers
 
             return new OkObjectResult("Successfully");
         }
+
+        [HttpPost("UpdatePaymentStatus")]
+        public async Task<IActionResult> UpdatePaymentStatus([FromBody] UpdatePaymentStatusRequest updatePaymentStatusRequest)
+        {
+            _logger.LogDebug("Updating Billing request.");
+
+            await _billingService.UpdatePaymentStatus(updatePaymentStatusRequest);
+
+            return new OkObjectResult("Successfully");
+        }
     }
 }

@@ -45,60 +45,25 @@ namespace Doppler.Sap.Factory
             {
                 var sapSystem = SapSystemHelper.GetSapSystemByBillingSystem(dequeuedTask.BillingRequest.BillingSystemId);
                 var sapTaskHandler = _sapServiceSettingsFactory.CreateHandler(sapSystem);
-                var businessPartner = await sapTaskHandler.TryGetBusinessPartner(dequeuedTask.BillingRequest.UserId, dequeuedTask.BillingRequest.FiscalID, dequeuedTask.BillingRequest.PlanType);
+                var existentInvoice = await sapTaskHandler.TryGetInvoiceByInvoiceId(dequeuedTask.BillingRequest.InvoiceId);
+                var sapResponse = (dequeuedTask.TaskType == Enums.SapTaskEnum.BillingRequest) ? await CreateInvoice(dequeuedTask, sapSystem) : await UpdateInvoice(dequeuedTask, sapSystem, existentInvoice);
 
-                var billingValidator = GetValidator(sapSystem);
-                if (!billingValidator.CanCreate(businessPartner, dequeuedTask.BillingRequest))
+                if (sapResponse.IsSuccessful)
                 {
-                    return new SapTaskResult
-                    {
-                        IsSuccessful = false,
-                        SapResponseContent = $"Failed at generating billing request for the user: {dequeuedTask.BillingRequest.UserId}.",
-                        TaskName = "Creating Billing Request"
-                    };
-                }
-
-                dequeuedTask.BillingRequest.CardCode = businessPartner.CardCode;
-
-                var serviceSetting = SapServiceSettings.GetSettings(_sapConfig, sapSystem);
-                var message = new HttpRequestMessage
-                {
-                    RequestUri = new Uri($"{serviceSetting.BaseServerUrl}{serviceSetting.BillingConfig.Endpoint}"),
-                    Content = new StringContent(JsonConvert.SerializeObject(dequeuedTask.BillingRequest),
-                        Encoding.UTF8,
-                        "application/json"),
-                    Method = HttpMethod.Post
-                };
-
-                var cookies = await sapTaskHandler.StartSession();
-                message.Headers.Add("Cookie", cookies.B1Session);
-                message.Headers.Add("Cookie", cookies.RouteId);
-
-                var client = _httpClientFactory.CreateClient();
-                var sapResponse = await client.SendAsync(message);
-                var responseContent = await sapResponse.Content.ReadAsStringAsync();
-
-                if (sapResponse.IsSuccessStatusCode)
-                {
+                    var serviceSetting = SapServiceSettings.GetSettings(_sapConfig, sapSystem);
                     if (serviceSetting.BillingConfig.NeedCreateIncomingPayments &&
                         dequeuedTask.BillingRequest.TransactionApproved)
                     {
-                        responseContent = await sapResponse.Content.ReadAsStringAsync();
-                        var response = JsonConvert.DeserializeObject<SapSaleOrderInvoiceResponse>(responseContent);
-                        return await SendIncomingPaymentToSap(serviceSetting, sapSystem, response, dequeuedTask.BillingRequest.TransferReference, cookies);
+                        var response = JsonConvert.DeserializeObject<SapSaleOrderInvoiceResponse>(sapResponse.SapResponseContent);
+                        return await SendIncomingPaymentToSap(serviceSetting, sapSystem, existentInvoice ?? response, dequeuedTask.BillingRequest.TransferReference);
                     }
                 }
                 else
                 {
-                    _logger.LogError($"Invoice/Sales Order could'n create to SAP because exists an error: '{responseContent}'.");
+                    _logger.LogError($"Invoice/Sales Order could'n create to SAP because exists an error: '{sapResponse.SapResponseContent}'.");
                 }
 
-                return new SapTaskResult
-                {
-                    IsSuccessful = sapResponse.IsSuccessStatusCode,
-                    SapResponseContent = responseContent,
-                    TaskName = "Creating Billing Request"
-                };
+                return sapResponse;
             }
             catch (Exception ex)
             {
@@ -111,7 +76,7 @@ namespace Doppler.Sap.Factory
             }
         }
 
-        private async Task<SapTaskResult> SendIncomingPaymentToSap(SapServiceConfig serviceSetting, string sapSystem, SapSaleOrderInvoiceResponse response, string transferReference, SapLoginCookies cookies)
+        private async Task<SapTaskResult> SendIncomingPaymentToSap(SapServiceConfig serviceSetting, string sapSystem, SapSaleOrderInvoiceResponse response, string transferReference)
         {
             var billingMapper = GetMapper(sapSystem);
             var incomingPaymentRequest = billingMapper.MapSapIncomingPayment(response.DocEntry, response.CardCode, response.DocTotal, response.DocDate, transferReference);
@@ -123,6 +88,8 @@ namespace Doppler.Sap.Factory
                 Method = HttpMethod.Post
             };
 
+            var sapTaskHandler = _sapServiceSettingsFactory.CreateHandler(sapSystem);
+            var cookies = await sapTaskHandler.StartSession();
             message.Headers.Add("Cookie", cookies.B1Session);
             message.Headers.Add("Cookie", cookies.RouteId);
 
@@ -138,7 +105,7 @@ namespace Doppler.Sap.Factory
             {
                 IsSuccessful = sapResponse.IsSuccessStatusCode,
                 SapResponseContent = await sapResponse.Content.ReadAsStringAsync(),
-                TaskName = "Creating Billing Request"
+                TaskName = "Creating/Updating Billing with Payment Request"
             };
         }
 
@@ -166,6 +133,86 @@ namespace Doppler.Sap.Factory
             }
 
             return validator;
+        }
+
+        private async Task<SapTaskResult> CreateInvoice(SapTask dequeuedTask, string sapSystem)
+        {
+            var sapTaskHandler = _sapServiceSettingsFactory.CreateHandler(sapSystem);
+            var businessPartner = await sapTaskHandler.TryGetBusinessPartner(dequeuedTask.BillingRequest.UserId, dequeuedTask.BillingRequest.FiscalID, dequeuedTask.BillingRequest.PlanType);
+            var billingValidator = GetValidator(sapSystem);
+            if (!billingValidator.CanCreate(businessPartner, dequeuedTask.BillingRequest))
+            {
+                return new SapTaskResult
+                {
+                    IsSuccessful = false,
+                    SapResponseContent = $"Failed at generating billing request for the user: {dequeuedTask.BillingRequest.UserId}.",
+                    TaskName = "Creating Billing Request"
+                };
+            }
+
+            dequeuedTask.BillingRequest.CardCode = businessPartner.CardCode;
+            var serviceSetting = SapServiceSettings.GetSettings(_sapConfig, sapSystem);
+            var uriString = $"{serviceSetting.BaseServerUrl}{serviceSetting.BillingConfig.Endpoint}";
+            var sapResponse = await SendMessage(dequeuedTask.BillingRequest, sapSystem, uriString, HttpMethod.Post);
+
+            return new SapTaskResult
+            {
+                IsSuccessful = sapResponse.IsSuccessStatusCode,
+                SapResponseContent = await sapResponse.Content.ReadAsStringAsync(),
+                TaskName = "Creating Billing Request"
+            };
+        }
+
+        private async Task<SapTaskResult> UpdateInvoice(SapTask dequeuedTask, string sapSystem, SapSaleOrderInvoiceResponse invoiceFromSap)
+        {
+            var billingValidator = GetValidator(sapSystem);
+            if (!billingValidator.CanUpdate(invoiceFromSap, dequeuedTask.BillingRequest))
+            {
+                return new SapTaskResult
+                {
+                    IsSuccessful = false,
+                    SapResponseContent = $"Failed at updating billing request for the invoice: {dequeuedTask.BillingRequest.InvoiceId}.",
+                    TaskName = "Updating Billing Request"
+                };
+            }
+
+            var serviceSetting = SapServiceSettings.GetSettings(_sapConfig, sapSystem);
+            var uriString = $"{serviceSetting.BaseServerUrl}{serviceSetting.BillingConfig.Endpoint}({invoiceFromSap.DocEntry})";
+            var sapResponse = await SendMessage(dequeuedTask.BillingRequest, sapSystem, uriString, HttpMethod.Patch);
+
+            var taskResult = new SapTaskResult
+            {
+                IsSuccessful = sapResponse.IsSuccessStatusCode,
+                SapResponseContent = await sapResponse.Content.ReadAsStringAsync(),
+                TaskName = "Updating Invoice"
+            };
+
+            return taskResult;
+        }
+
+        private async Task<HttpResponseMessage> SendMessage(SapSaleOrderModel saleOrder, string sapSystem, string uriString, HttpMethod method)
+        {
+            var message = new HttpRequestMessage()
+            {
+                RequestUri = new Uri(uriString),
+                Content = new StringContent(JsonConvert.SerializeObject(saleOrder,
+                    new JsonSerializerSettings
+                    {
+                        NullValueHandling = NullValueHandling.Ignore,
+                        DefaultValueHandling = DefaultValueHandling.Ignore
+                    }),
+                    Encoding.UTF8,
+                    "application/json"),
+                Method = method
+            };
+
+            var sapTaskHandler = _sapServiceSettingsFactory.CreateHandler(sapSystem);
+            var cookies = await sapTaskHandler.StartSession();
+            message.Headers.Add("Cookie", cookies.B1Session);
+            message.Headers.Add("Cookie", cookies.RouteId);
+
+            var client = _httpClientFactory.CreateClient();
+            return await client.SendAsync(message);
         }
     }
 }

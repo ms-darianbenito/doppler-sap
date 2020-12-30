@@ -6,8 +6,12 @@ namespace Doppler.Sap.Validations.Billing
     {
         bool CanCreate(SapBusinessPartner sapBusinessPartner, SapSaleOrderModel billingRequest);
 
+        bool CanUpdate(SapSaleOrderInvoiceResponse saleOrder, SapSaleOrderModel billingRequest);
+
         bool CanValidateSapSystem(string sapSystem);
 
         void ValidateRequest(BillingRequest dopplerBillingRequest);
+
+        void ValidateUpdateRequest(UpdatePaymentStatusRequest updateBillingRequest);
     }
 }

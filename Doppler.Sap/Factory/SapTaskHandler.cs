@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -163,6 +164,29 @@ namespace Doppler.Sap.Factory
             task.ExistentBusinessPartner = existentBusinessPartner;
 
             return task;
+        }
+
+        public async Task<SapSaleOrderInvoiceResponse> TryGetInvoiceByInvoiceId(int invoiceId)
+        {
+            var message = new HttpRequestMessage()
+            {
+                RequestUri = new Uri($"{_sapServiceConfig.BaseServerUrl}{_sapServiceConfig.BillingConfig.Endpoint}?$filter=U_DPL_INV_ID eq {invoiceId}"),
+                Method = HttpMethod.Get
+            };
+
+            var cookies = await StartSession();
+            message.Headers.Add("Cookie", cookies.B1Session);
+            message.Headers.Add("Cookie", cookies.RouteId);
+
+            var client = _httpClientFactory.CreateClient();
+            var sapResponse = await client.SendAsync(message);
+
+            if (sapResponse.IsSuccessStatusCode)
+            {
+                return JsonConvert.DeserializeObject<SapInvoiceList>((await sapResponse.Content.ReadAsStringAsync())).Value.FirstOrDefault();
+            }
+
+            return null;
         }
     }
 }

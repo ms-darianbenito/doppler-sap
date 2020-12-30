@@ -103,9 +103,33 @@ namespace Doppler.Sap.Services
                 }
                 catch (Exception e)
                 {
-                    _logger.LogError($"Failed at generating billing request for user: {billing.Id}. Error: {e.Message}");
+                    _logger.LogError($"Failed at generating billing request for user: {billing.Id}.", e);
                     await _slackService.SendNotification($"Failed at generating billing request for user: {billing.Id}. Error: {e.Message}");
                 }
+            }
+        }
+
+        public async Task UpdatePaymentStatus(UpdatePaymentStatusRequest updateBillingRequest)
+        {
+            try
+            {
+                var sapSystem = SapSystemHelper.GetSapSystemByBillingSystem(updateBillingRequest.BillingSystemId);
+                var validator = GetValidator(sapSystem);
+                validator.ValidateUpdateRequest(updateBillingRequest);
+                var billingRequest = GetMapper(sapSystem).MapDopplerUpdateBillingRequestToSapSaleOrder(updateBillingRequest);
+
+                _queuingService.AddToTaskQueue(
+                    new SapTask
+                    {
+                        BillingRequest = billingRequest,
+                        TaskType = SapTaskEnum.UpdateBilling
+                    }
+                );
+            }
+            catch (Exception e)
+            {
+                _logger.LogError($"Failed at update billing request for invoice: {updateBillingRequest.InvoiceId}.", e);
+                await _slackService.SendNotification($"Failed at update billing request for invoice: {updateBillingRequest.InvoiceId}. Error: {e.Message}");
             }
         }
 

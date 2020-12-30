@@ -8,5 +8,7 @@ namespace Doppler.Sap.Mappers.Billing
         bool CanMapSapSystem(string sapSystem);
         SapSaleOrderModel MapDopplerBillingRequestToSapSaleOrder(BillingRequest billingRequest);
         SapIncomingPaymentModel MapSapIncomingPayment(int docEntry, string cardCode, decimal docTotal, DateTime docDate, string transferReference);
+
+        SapSaleOrderModel MapDopplerUpdateBillingRequestToSapSaleOrder(UpdatePaymentStatusRequest updateBillingRequest);
     }
 }

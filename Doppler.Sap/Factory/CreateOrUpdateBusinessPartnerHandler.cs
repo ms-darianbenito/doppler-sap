@@ -1,5 +1,6 @@
 using Doppler.Sap.Models;
 using Doppler.Sap.Utils;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System;
@@ -16,27 +17,45 @@ namespace Doppler.Sap.Factory
         private readonly SapConfig _sapConfig;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly ISapServiceSettingsFactory _sapServiceSettingsFactory;
+        private readonly ILogger<CreateOrUpdateBusinessPartnerHandler> _logger;
 
         public CreateOrUpdateBusinessPartnerHandler(
             IOptions<SapConfig> sapConfig,
+            ILogger<CreateOrUpdateBusinessPartnerHandler> logger,
             IHttpClientFactory httpClientFactory,
             ISapServiceSettingsFactory sapServiceSettingsFactory)
         {
             _sapConfig = sapConfig.Value;
+            _logger = logger;
             _httpClientFactory = httpClientFactory;
             _sapServiceSettingsFactory = sapServiceSettingsFactory;
         }
 
         public async Task<SapTaskResult> Handle(SapTask dequeuedTask)
         {
-            var sapSystem = SapSystemHelper.GetSapSystemByBillingSystem(dequeuedTask.DopplerUser.BillingSystemId);
+            try
+            {
+                var sapSystem = SapSystemHelper.GetSapSystemByBillingSystem(dequeuedTask.DopplerUser.BillingSystemId);
 
-            var sapTaskHandler = _sapServiceSettingsFactory.CreateHandler(sapSystem);
-            dequeuedTask = await sapTaskHandler.CreateBusinessPartnerFromDopplerUser(dequeuedTask);
+                var sapTaskHandler = _sapServiceSettingsFactory.CreateHandler(sapSystem);
+                dequeuedTask = await sapTaskHandler.CreateBusinessPartnerFromDopplerUser(dequeuedTask);
 
-            return !dequeuedTask.ExistentBusinessPartner.CreateDate.HasValue ?
-                await CreateBusinessPartner(dequeuedTask, sapSystem) :
-                await UpdateBusinessPartner(dequeuedTask, sapSystem);
+                return !dequeuedTask.ExistentBusinessPartner.CreateDate.HasValue ?
+                    await CreateBusinessPartner(dequeuedTask, sapSystem) :
+                    await UpdateBusinessPartner(dequeuedTask, sapSystem);
+            }
+            catch (Exception ex)
+            {
+                var exceptionMessage = $"Failed to create or update the Business Partner for the user: {(dequeuedTask.BusinessPartner.CardCode ?? string.Empty)}. Error: {ex.Message}";
+
+                _logger.LogError(ex, exceptionMessage);
+                return new SapTaskResult
+                {
+                    IsSuccessful = false,
+                    SapResponseContent = exceptionMessage,
+                    TaskName = "Create Or Update Business Partner"
+                };
+            }
         }
 
         private async Task<SapTaskResult> CreateBusinessPartner(SapTask dequeuedTask, string sapSystem)

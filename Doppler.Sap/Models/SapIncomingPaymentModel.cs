@@ -16,5 +16,6 @@ namespace Doppler.Sap.Models
         public string JournalRemarks { get; set; }
         public string TaxDate { get; set; }
         public List<SapPaymentInvoiceModel> PaymentInvoices { get; set; }
+        public string U_ClaseCashfloCaja { get; set; }
     }
 }

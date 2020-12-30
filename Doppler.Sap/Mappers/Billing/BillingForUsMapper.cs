@@ -18,7 +18,8 @@ namespace Doppler.Sap.Mappers.Billing
         private const string _costingCode3 = "USA";
         private const string _costingCode4 = "NOAPL4";
         private const string _currencyCode = "$";
-        private const string _transferAccount = "1.1.01.2.001";
+        private const string _transferAccount = "1.1.01.2.003";
+        private const string _uClaseCashfloCaja = "Cobros por ventas Doppler";
 
         private readonly ISapBillingItemsService _sapBillingItemsService;
         private readonly IDateTimeProvider _dateTimeProvider;
@@ -153,6 +154,7 @@ namespace Doppler.Sap.Mappers.Billing
                 TransferSum = docTotal,
                 JournalRemarks = $"Pagos recibidos - {cardCode}",
                 TransferReference = transferReference,
+                U_ClaseCashfloCaja = _uClaseCashfloCaja,
                 PaymentInvoices = new List<SapPaymentInvoiceModel>
                 {
                     new SapPaymentInvoiceModel

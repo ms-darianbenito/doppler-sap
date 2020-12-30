@@ -178,7 +178,8 @@ namespace Doppler.Sap.Mappers.Billing
                 InvoiceId = updateBillingRequest.InvoiceId,
                 U_DPL_CARD_ERROR_COD = updateBillingRequest.CardErrorCode,
                 U_DPL_CARD_ERROR_DET = updateBillingRequest.CardErrorDetail,
-                TransactionApproved = updateBillingRequest.TransactionApproved
+                TransactionApproved = updateBillingRequest.TransactionApproved,
+                TransferReference = updateBillingRequest.TransferReference
             };
         }
     }

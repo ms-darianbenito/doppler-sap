@@ -20,7 +20,7 @@ namespace Doppler.Sap.Test
     {
         [Fact]
 
-        public async void CreateOrUpdateBusinessPartnerHandler_ShouldBeThownsAnExcpetion_WhenCountryCodeNotAROrUS()
+        public async Task CreateOrUpdateBusinessPartnerHandler_ShouldBeThownsAnExcpetion_WhenCountryCodeNotAROrUS()
         {
             var countryCode = "MX";
 
